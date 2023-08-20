@@ -2,17 +2,18 @@
 #include <setjmp.h>
 #include <ustring.h>
 
-char* SGAFirstWarn = 0;
-char* SGAErroMsg = 0;
+Dnode* SGAWarnChain;//{TODO} warnings chain
 size_t SGANumofWarn = 0;
+
+char* SGAErroMsg = 0;
 jmp_buf errjb = { 0 };
-Dnode* FreeListLast;
+
+Dnode* ToFreeList;//{TODO}
 
 void warn(char* str)
 {
-	// in constant area
 	SGANumofWarn++;
-	if (!SGAFirstWarn) SGAFirstWarn = str;
+	///if (!SGAFirstWarn) SGAFirstWarn = str;
 }
 void erro(char* str)
 {
@@ -20,3 +21,6 @@ void erro(char* str)
 	if (errjb)
 		longjmp(errjb, 1);
 }
+
+
+

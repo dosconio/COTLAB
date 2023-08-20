@@ -1,14 +1,14 @@
 // GBK
+
 #include <ustring.h>
 #include <alice.h>
-#include <aldbg.h>
-
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <inttypes.h>
 #include <setjmp.h>
 #include <conio.h>
-#include "token.h"// need ustring
+#include "parser.h"// need ustring
+#include "executor.h"
 
 char buffer[0x1000];
 char buffer2[0x1000];
@@ -26,25 +26,23 @@ size_t show_precise = 64;
 extern char* SGAErroMsg;
 extern jmp_buf errjb;
 FILE* fp;
-int fgetnext()
-{
-	if (!fp) return EOF;
-	return fgetc(fp);
-}
-void fseekback(ptrdiff_t l)
-{
-	if (!fp) return;
-	fseek(fp, l, SEEK_CUR);
-}
+
+int fgetnext() { return fgetc(fp); }
+void fseekback(ptrdiff_t l) { fseek(fp, l, SEEK_CUR); }
+
 int main()
 {
-	fopen_s(&fp, "d01.txt", "r");
-	Tode* ori = StrTokenAll(fgetnext, fseekback, arna_tempor);
+	printf("COTLAB RFB " __DATE__ "\n");// GCC Specific Code but MSVC
+	fopen_s(&fp, "../_bin/commands00.bat", "r");
 	if (!fp) return 1;
+	Tode* ori = StrTokenAll(fgetnext, fseekback, arna_tempor);
 	fclose(fp);
-	StrTokenStruct(ori);
+	StrTokenParse(ori);
+	CotExecuate(ori, NULL, NULL);
+	printf("malc_count=%llx\n", malc_count);
+	system("pause");
 }
-int aaa[1 / 2 + 1];
+
 /*
 // For other application calling.
 char* CotLine(const char* buffer, void(*ErrProc)(char*))

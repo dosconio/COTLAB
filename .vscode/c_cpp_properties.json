@@ -1,0 +1,46 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "../unisym/c/"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE",
+                "_dbg"
+            ],
+            "compilerPath": "C:\\Soft\\mingw64\\bin\\gcc.exe",
+            "cStandard": "c99",
+            "cppStandard": "gnu++14",
+            "intelliSenseMode": "windows-gcc-x64",
+            "compilerArgs": [
+                "-m32",
+                "-I\"../unisym/c/\""
+            ]
+        },
+        {
+            "name": "x64",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "../unisym/c/"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE",
+                "_dbg"
+            ],
+            "cStandard": "c99",
+            "cppStandard": "gnu++14",
+            "intelliSenseMode": "windows-gcc-x64",
+            "compilerArgs": [
+                "-m64",
+                "-I\"../unisym/c/\""
+            ]
+        }
+    ],
+    "version": 4
+}
