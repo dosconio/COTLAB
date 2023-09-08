@@ -1,4 +1,7 @@
-// GBK
+// ASCII
+//	COTLAB  Copyright (C) 2023  Dosconio
+//	This is free software, and you are welcome to redistribute it
+//	under certain conditions; type `$ cot license' for details.
 
 #include <ustring.h>
 #include <alice.h>

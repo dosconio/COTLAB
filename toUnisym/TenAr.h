@@ -1,5 +1,5 @@
 // ASCII ArinaCovenant
-// If another project needs this in the future, this will be appended into UNISYM.
+// COPYRIGHT. THE CODE IS CONTRIBUTED TO UNISYM(Apache 2) OF ArinaMgk@GitHub
 
 #ifndef ArnModTensor
 #define ArnModTensor
