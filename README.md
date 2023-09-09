@@ -7,7 +7,7 @@
 - license: GPL-3.0 license
 - author: @`dosconio` in GitHub, dosconyo@gmail.com for email 
 - special: Everything can be a function.
-- Language: **Ayano**
+- Language: **Datura**
 
 
 
