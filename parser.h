@@ -14,14 +14,14 @@
 - Erro Mech
 - Pre-unisym: TenAr
 */
-/*
+/* StrTokenParse
 - Comment and spaces;
 - Strcat;
 - Discard any directive temporarily;
 - Convert all operators into function calling form;
 - Check that each line only has either one IEV or one NUM/STR/IDEN, or it will be bad;
 - Echo for debug (for IEV);
-- Convert each IEV to function-calling-form and make linkage;
+- Convert each IEV to function-calling-form and make linkage; [StrTokenLinkage]
 - {USELESS} Make EXEC chain;
 - {TODO} Check no more symbols except parenx;
 - {TODO} Check parens and parend matched;

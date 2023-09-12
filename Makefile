@@ -1,5 +1,5 @@
 usym = ../Unisym/c/
-depend_usym = $(usym)source/ustring.c
+depend_usym = $(usym)source/ustring.c $(usym)source/hstring.c
 builds = cotlab.c erro.c parser.c executor.c
 # Windows
 c64:

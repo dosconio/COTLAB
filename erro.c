@@ -1,4 +1,5 @@
 // ASCII
+#define _LIB_STRING_HEAP
 #include <setjmp.h>
 #include <ustring.h>
 

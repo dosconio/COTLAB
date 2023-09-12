@@ -1,6 +1,6 @@
 // ASCII
+#define _LIB_STRING_HEAP
 #include <ustring.h>
-#include <aldbg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>

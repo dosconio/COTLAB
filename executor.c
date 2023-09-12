@@ -1,4 +1,5 @@
 // ASCII
+#define _LIB_STRING_HEAP
 #include <stdio.h>
 #include <ustring.h>
 #include "parser.h"
