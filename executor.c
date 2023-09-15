@@ -1,66 +1,94 @@
-// ASCII
-#define _LIB_STRING_HEAP
+// ASCII GPL3 COTLAB Copyright (C) 2023 Dosconio
+#include "ulibex.h"
 #include <stdio.h>
-#include <ustring.h>
+#include <cdear.h>
+#include <inttypes.h>
 #include "parser.h"
 #include "executor.h"
 
-static void CotExecuateEvaluate(Tode* t)
+void CotPrint(dnode* inp)
 {
-	if (t->type == tok_else)
+	for (dnode* crt = inp->right; crt; crt = crt->next)
 	{
-		fstruc* fs = (void*)t->addr;
-		for (unsigned int i = 0; i < fs->counts; i++)
+		if (crt->type == tok_number)
 		{
-			if (fs->paras[i].ptype == dt_func)
-			{
-				CotExecuateEvaluate(fs->paras[i].content);
-				fs->paras[i].content = ((Tode*)fs->paras[i].content)->addr;// {} cost me half day to check the mistake, the pointer acting as the value is bad, but this will be changed in the future.
-									
-			}
-		}
-		expr* re = fs->flink(fs);
-		if (re->ptype == dt_uint)
-			t->type = tok_number,
-			t->addr = (void*)(size_t)re->content;
-		// {} free it
-	}
-}
-
-// Do not free execs.
-void CotExecuate(Tode* execs, expr* returns, unsigned int* retnums)
-{
-	// may rise errors
-	Tode* crt = execs->next;
-	unsigned v_retnum = 0;
-	while (crt)
-	{
-		v_retnum++;
-		crt = crt->next;
-	}
-	//  *retnums = v_retnum;
-	crt = execs->next;
-	while (crt)
-	{
-		// temporarily just print them
-		if (crt->type == tok_else)
-		{
-			CotExecuateEvaluate(crt);
-			printf("Line%4llu: %lld\n", crt->row, (long long int)crt->addr);//{ } assert type: uint
-		}
-		else if (crt->type == tok_number)
-		{
-			printf("Line%4llu: %lld\n", crt->row, atoins(crt->addr));
+			char* p;
+			p = CoeToLocale((void*)crt->addr, 0);
+			printf("Line %" PRIiPTR ": %s\n", 0, p);//{TODO} use tnode as dnode
+			memf(p);
 		}
 		else
 		{
-			printf("element: [%x] %s\n", crt->type, crt->addr);
+			if (crt->addr)
+				printf("Line %" PRIiPTR ": %s\n", 0, crt->addr);//{TODO} use tnode as dnode
 		}
-		crt = crt->next;
 	}
-	// Test stage
-	// - If and only if result is a unsigned integer, output it.
-	// - Just realize + operator.
-	// - Do not FREE temporarily!!!
+}
+
+nnode* CotExecuate(nnode* inp)
+{
+	// Nest ---> Linear of (func, imm-value)
+	// (1) ---> 1;  pi() ---> 3.1416; ...
+	CoeInit();
+	for (nnode* crt = inp; crt; crt = crt->right)
+		if (crt->subf || crt->bind)
+		{
+			if (!crt->subf)// pi()
+			{
+				Dnode* res = ((fstruc_t)crt->bind)(0);
+				if (!res)
+				{
+					// delete the node, for its mainly focusing on side-effect
+					if (crt->left)crt->left->right = crt->right;
+					if (crt->right)crt->right->left = crt->left;
+					memf(crt->addr);
+					Dnode* tmpdn = crt->left ? crt->left : crt->right;
+					memf(crt);
+					crt = tmpdn;
+					if (!crt) 0;// nothing in the chain
+				}
+				else// if(fs.return_num==1)
+				{
+					// {TEMP} just for 1 return.
+					crt->class = res->type;
+					crt->addr = res->addr;
+					memf(res);// {TEMP}
+				}
+			}
+			else// {TODO} merged with the above
+			{
+				// f(h(1,2))
+				CotExecuate(crt->subf);
+				Dnode* f_in = NnodeToDnode(crt->subf);// one of alias of crt->subf
+				Dnode* res = 0;
+				if (crt->bind)
+				{
+					res = ((fstruc_t)crt->bind)(f_in);
+					CotRelease(f_in);
+				}
+				else res = f_in;
+				
+				// {TEMP}
+				if (res)
+				{
+					crt->class = res->type;
+					if (crt->addr) memf(crt->addr);
+					crt->addr = res->addr;
+					DnodeRelease(res, 0);// {TOD} now just for single return function
+				}
+				else
+				{
+					// Remove the node
+					if (!crt->right) return inp;
+					// {confirm} there should always be a element on the left
+					crt->left->right = crt->right;
+					nnode* tmp = crt->right->left = crt->left;
+					memf(crt->addr);
+					memf(crt);
+					crt = tmp;
+				}
+				crt->subf = 0;
+			}
+		}
 	
 }

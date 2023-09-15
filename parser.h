@@ -1,4 +1,4 @@
-// ASCII
+// ASCII GPL3 COTLAB Copyright (C) 2023 Dosconio
 /* UNISYM Provided
 - ChrAr -> CoeAr -> Arn/NumAr
 - RsgAr -> RegAr -> HrnAr (Rsg aka Bcd)
@@ -18,77 +18,24 @@
 - Comment and spaces;
 - Strcat;
 - Discard any directive temporarily;
+- Make the imm-value live
+- - - - flag for marking existence of symbols of the scope, - - - -
+- - - - excluding the sub-scopes.                           - - - -
+- {WISH} Restructure for nested
 - Convert all operators into function calling form;
-- Check that each line only has either one IEV or one NUM/STR/IDEN, or it will be bad;
-- Echo for debug (for IEV);
-- Convert each IEV to function-calling-form and make linkage; [StrTokenLinkage]
-- {USELESS} Make EXEC chain;
-- {TODO} Check no more symbols except parenx;
-- {TODO} Check parens and parend matched;
+- Check that each line only has one item;
+- Echo for debug;
+- Linkage; [StrTokenLinkage: fill linked_func]
 */
 
 #ifndef HrnCotlabParser
 #define HrnCotlabParser
 
-#include <ustring.h>
+#include "ulibex.h"
 
-enum datatype
-{
-	dt_func,
+typedef dnode* (*fstruc_t)(dnode* const);
 
-	// RegAr can operate:
-	dt_uint,
-	dt_sint,// > uint
-	dt_float,// > sint
-
-	// HrnAr:
-	dt_num,// >float (default _Complex)
-	dt_posi,// 4D vector
-	
-	dt_str,// ASCII string, by ustring
-
-	// {wstring}
-	dt_astr,// ANSI string, by wchar
-	
-	dt_u8str,//{TODO} UTF-8 string, by nothing
-
-	// TenAr&Op
-	dt_vector,// V[]
-	dt_readonly,// Ro[] Tuple in Python
-	dt_comb,// [] List in Python. (type of combination can be different)
-	dt_ary,// dt_x[]
-	dtx_dictionary,// from Python
-	dt_tensor,// T[] ten* > vector
-	dt_matrix,// M[], will by MtrAr
-
-	dt_rangei,// [ ~ ] (by HrnAr x and t, t as summit)
-	dt_rangec,// 0( , ) 3[ , ] 2[ , ) 1( , ] (by HrnAr x, y and t, t as type)
-};
-
-typedef struct
-{
-	enum datatype ptype;
-	void* content;
-} fpara, expr;
-
-typedef struct fstruc
-{
-	char* iden;
-	fpara* paras;// constant
-	expr* (*flink)(struct fstruc* const fparas);// func_link
-	unsigned int counts;//{TODO} limit
-} fstruc;
-
-typedef Dnode token;
-
-typedef struct InterElseValue
-{
-	char* fname;
-	Tode* subfirst;
-} iev;// can be into `fstruc` with the enough information.
-// difference: iev for toktype, fstruc for datatype
-
-void StrTokenParse(Tode* inp);
+nnode* StrTokenParse(Tode* inp);
 
 
 #endif

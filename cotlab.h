@@ -1,3 +1,4 @@
+// ASCII GPL3 COTLAB Copyright (C) 2023 Dosconio
 #ifndef ModCOTLAB
 #define ModCOTLAB
 

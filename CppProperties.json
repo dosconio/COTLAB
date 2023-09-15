@@ -1,0 +1,24 @@
+{
+  "configurations": [
+    {
+      "inheritEnvironments": [
+        "msvc_x64"
+      ],
+      "name": "x64-Release",
+      "includePath": [
+        "${env.INCLUDE}",
+        "${workspaceRoot}\\**",
+        "../unisym/c/"
+      ],
+      "defines": [
+        "WIN32",
+        "NDEBUG",
+        "UNICODE",
+        "_UNICODE",
+        "_dbg"
+      ],
+      "intelliSenseMode": "windows-msvc-x64"
+    }
+  ],
+  "@file" : "Visual Studio Configurations for COTLAB"
+}
