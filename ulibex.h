@@ -42,23 +42,21 @@ enum datatype// for Nesnode.iden
 };
 
 
-// ---- ---- ---- ---- nnode.c ---- ---- ---- ----
+// ---- ---- ---- ---- nodex.c ---- ---- ---- ----
 
-void CotRelease(dnode* inp);
+void NnodeFree(void* n);
+void DnodesReleaseCotlab(dnode* inp);
+void CotRelease(tnode* inp);
 
 // keep input `nest` zero.
 void NnodePrint(const Nesnode* nnod, unsigned nest);
 
 // Return the case. Do the check before calling this
-int NnodeSymbolsDivide(nnode* inp, size_t width, size_t idx);
-
-inline static void NnodeDelete(Nesnode* nnod)// not for Coe object
-{
-	memf(nnod->addr);
-	memf(nnod);
-}
+int NnodeSymbolsDivide(nnode* inp, size_t width, size_t idx, nnode* parent);
 
 // Rewrite the nnode
 dnode* NnodeToDnode(nnode* inp);
+tnode* NnodeToTnode(nnode* inp);
+
 
 #endif

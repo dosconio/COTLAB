@@ -5,6 +5,16 @@
 #include <cdear.h>
 #include "parser.h"
 
+dnode* Dtr_dbg_test(dnode* const callinfo)
+{
+	puts("Hello, Datura");
+	coe* co = CoeNew("+1", "+1", "+1");
+	dnode* ret = zalcof(dnode);
+	ret->addr = (void*)co;
+	ret->type = tok_number;
+	return ret;
+}
+
 dnode* DtrPREPOSI(dnode* const callinfo)
 {
 	coe* co = CoeCpy((void*)callinfo->addr);

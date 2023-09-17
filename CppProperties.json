@@ -15,7 +15,8 @@
         "NDEBUG",
         "UNICODE",
         "_UNICODE",
-        "_dbg"
+        "_dbg",
+        "_dbg_echo"
       ],
       "intelliSenseMode": "windows-msvc-x64"
     }

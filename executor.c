@@ -6,21 +6,21 @@
 #include "parser.h"
 #include "executor.h"
 
-void CotPrint(dnode* inp)
+void CotPrint(tnode* inp)
 {
-	for (dnode* crt = inp->right; crt; crt = crt->next)
+	for (tnode* crt = inp->right; crt; crt = crt->next)
 	{
 		if (crt->type == tok_number)
 		{
 			char* p;
-			p = CoeToLocale((void*)crt->addr, 0);
-			printf("Line %" PRIiPTR ": %s\n", 0, p);//{TODO} use tnode as dnode
+			p = CoeToLocale((void*)crt->addr, 1);
+			printf("Line %" PRIiPTR ": %s\n", 0LL, p);//{TODO} use tnode as dnode
 			memf(p);
 		}
 		else
 		{
 			if (crt->addr)
-				printf("Line %" PRIiPTR ": %s\n", 0, crt->addr);//{TODO} use tnode as dnode
+				printf("Line %" PRIiPTR ": %s\n", 0LL, crt->addr);//{TODO} use tnode as dnode
 		}
 	}
 }
@@ -42,7 +42,7 @@ nnode* CotExecuate(nnode* inp)
 					if (crt->left)crt->left->right = crt->right;
 					if (crt->right)crt->right->left = crt->left;
 					memf(crt->addr);
-					Dnode* tmpdn = crt->left ? crt->left : crt->right;
+					nnode* tmpdn = crt->left ? crt->left : crt->right;
 					memf(crt);
 					crt = tmpdn;
 					if (!crt) 0;// nothing in the chain
@@ -51,6 +51,7 @@ nnode* CotExecuate(nnode* inp)
 				{
 					// {TEMP} just for 1 return.
 					crt->class = res->type;
+					if (crt->addr) memf(crt->addr);
 					crt->addr = res->addr;
 					memf(res);// {TEMP}
 				}
@@ -64,7 +65,7 @@ nnode* CotExecuate(nnode* inp)
 				if (crt->bind)
 				{
 					res = ((fstruc_t)crt->bind)(f_in);
-					CotRelease(f_in);
+					DnodesReleaseCotlab(f_in);
 				}
 				else res = f_in;
 				

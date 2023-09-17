@@ -6,6 +6,6 @@
 // {TEMP} Print directly. Do not free execs.
 nnode* CotExecuate(nnode* inp);
 
-void CotPrint(dnode* inp);
+void CotPrint(tnode* inp);
 
 #endif

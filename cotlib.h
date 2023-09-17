@@ -1,5 +1,7 @@
 // ASCII GPL3 COTLAB Copyright (C) 2023 Dosconio
 
+dnode* Dtr_dbg_test(dnode* const callinfo);
+
 dnode* DtrPREPOSI(dnode* const callinfo);
 
 dnode* DtrPRENEGA(dnode* const callinfo);

@@ -4,18 +4,38 @@
 #include <stdio.h>
 #include <cdear.h>
 
-static void DnodesRelease_Chg(Dnode* first)
+void NnodeFree(void* n)
 {
-	if (first->next) DnodesRelease_Chg(first->next);
+	nnode* nod = n;
+	if (nod->class == tok_number)
+		CoeDel((void*)nod->addr);
+	else memf(nod->addr);
+	memf(n);
+}
+
+void DnodesReleaseCotlab(dnode* inp)
+{
+	dnode* first = inp;
+	if (inp->next) DnodesReleaseCotlab(inp->next);
 	if (first->type == tok_number)
-		CoeDel(first->addr);
-	else memfree(first->addr);
+		CoeDel((void*)first->addr);
+	else if (first->addr) memfree(first->addr);
 	memfree(first);
 }
 
-void CotRelease(dnode* inp)//{TODO} tnode
+static void TnodesReleaseCotlab(void* inp)
 {
-	DnodesRelease_Chg(inp);
+	tnode* first = inp;
+	if (first->type == tok_number)
+		CoeDel((void*)first->addr);
+	else if(first->addr) memfree(first->addr);
+	memfree(first);
+}
+
+void CotRelease(tnode* inp)//{TODO} tnode
+{
+	//NnodesRelease(inp, 0, NnodesReleaseCotlab);// can run but not explicit
+	TnodesReleases(inp, TnodesReleaseCotlab);
 }
 
 void NnodePrint(const Nesnode* nnod, unsigned nest)
@@ -33,7 +53,7 @@ void NnodePrint(const Nesnode* nnod, unsigned nest)
 	}
 }
 
-int NnodeSymbolsDivide(nnode* inp, size_t width, size_t idx)
+int NnodeSymbolsDivide(nnode* inp, size_t width, size_t idx, nnode* parent)
 {
 	// RFV14
 	size_t slen = StrLength(inp->addr);
@@ -61,27 +81,20 @@ int NnodeSymbolsDivide(nnode* inp, size_t width, size_t idx)
 	// "a" "+++" "b", "a"-'++'-"+" "b"
 	if (idx + width == slen)
 	{
-		nnode* newd = zalc(sizeof(nnode));
+		nnode* newd = NnodeInsert(inp, 0, parent);
 		newd->class = tok_sym;
-		newd->row = inp->row;
-		newd->col = inp->col;
 		inp->col += slen - width;
 		char* tmpaddr = StrHeap(inp->addr + idx);
 		newd->addr = inp->addr;
 		newd->addr[slen - width] = 0;
 		inp->addr = tmpaddr;
-		newd->right = inp;
-		newd->left = inp->left;
-		if (inp->left) inp->left->right = newd;
-		inp->left = newd;
 		return 2;
 	}
 	// 3else @.@
 	// "a" "+++*" "b", "a"-'++'-"+"-'*'-"b"
-	nnode* newleft = zalc(sizeof(nnode));
-	nnode* newright = zalc(sizeof(nnode));
+	nnode* newleft = NnodeInsert(inp, 0, parent);
+	nnode* newright = NnodeInsert(inp, 1, parent);
 	newleft->class = newright->class = tok_sym;
-	newleft->row = newright->row = inp->row;
 	newleft->col = inp->col;
 	inp->col += idx;
 	newright->col = inp->col + width;
@@ -90,31 +103,7 @@ int NnodeSymbolsDivide(nnode* inp, size_t width, size_t idx)
 	newleft->addr = inp->addr;
 	newleft->addr[idx] = 0;
 	inp->addr = tmpaddr_mid;
-	if (newleft->left = inp->left) inp->left->right = newleft;
-	if (newright->right = inp->right) inp->right->left = newright;
-	newleft->right = newright->left = inp;
-	inp->left = newleft;
-	inp->right = newright;
+
 	return 3;
 }
-
-dnode* NnodeToDnode(nnode* inp)
-{
-	if (sizeof(nnode) < sizeof(dnode)) return 0;
-	nnode tmpn, *next, *crt = inp;
-	dnode tmpd;
-	while (crt)
-	{
-		next = crt->right;
-		tmpn = *crt;
-		tmpd.addr = crt->addr;
-		tmpd.left = crt->left;
-		tmpd.next = crt->right;
-		tmpd.type = crt->class;
-		MemCopyN(crt, &tmpd, sizeof tmpd);
-		crt = next;
-	}
-	return (void*)inp;
-}
-
 
