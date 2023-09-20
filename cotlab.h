@@ -2,6 +2,8 @@
 #ifndef ModCOTLAB
 #define ModCOTLAB
 
+#define CotTitle "COTLAB [Datura] Copyright @Dosconio~ Build " __DATE__ "\n"
+
 void warn(char* str);
 void erro(char* str);
 

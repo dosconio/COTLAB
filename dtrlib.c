@@ -5,6 +5,22 @@
 #include <cdear.h>
 #include "parser.h"
 
+int cottask(int src, void* point);
+
+dnode* Dtr_system(dnode* const callinfo)
+{
+	if (callinfo->type == dt_str && callinfo->addr)
+		system(callinfo->addr);
+	return 0;
+}
+
+dnode* Dtr_load(dnode* const callinfo)
+{
+	if (callinfo->type == dt_str && callinfo->addr)
+		cottask(0, callinfo->addr);
+	return 0;
+}
+
 dnode* Dtr_dbg_test(dnode* const callinfo)
 {
 	puts("Hello, Datura");

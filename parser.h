@@ -35,7 +35,10 @@
 
 typedef dnode* (*fstruc_t)(dnode* const);
 
-nnode* StrTokenParse(Tode* inp);
+// Return the case. Do the check before calling this
+int NnodeSymbolsDivide(nnode* inp, size_t width, size_t idx, nnode* parent);
 
+//
+nnode* StrTokenParse(Tode* inp);
 
 #endif

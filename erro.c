@@ -2,6 +2,7 @@
 #define _LIB_STRING_HEAP
 #include <setjmp.h>
 #include <ustring.h>
+#include <cdear.h>
 
 Dnode* SGAWarnChain;//{TODO} warnings chain
 size_t SGANumofWarn = 0;
@@ -23,5 +24,37 @@ void erro(char* str)
 		longjmp(errjb, 1);
 }
 
+void cabort(_Need_free char* str)
+{
+	
+}
 
+void NnodeReleaseTofreeCotlab(void* n)
+{
+	nnode* nod = n;
+	if (nod->class == tok_number)
+		CoeDel((void*)nod->addr);
+	else memf(nod->addr);
+	memf(n);
+}
+
+void DnodesReleaseTofreeCotlab(dnode* inp)
+{
+	dnode* first = inp;
+	if (!inp) return;
+	if (inp->next) DnodesReleaseTofreeCotlab(inp->next);
+	if (first->type == tok_number)
+		CoeDel((void*)first->addr);
+	else if (first->addr) memfree(first->addr);
+	memfree(first);
+}
+
+void TnodesReleaseTofreeCotlab(void* inp)
+{
+	tnode* first = inp;
+	if (first->type == tok_number)
+		CoeDel((void*)first->addr);
+	else if(first->addr) memfree(first->addr);
+	memfree(first);
+}
 
