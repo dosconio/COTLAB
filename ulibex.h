@@ -5,24 +5,24 @@
 #define _LIB_STRING_HEAP
 #include <ustring.h>
 
+extern inode** inods;
+
 static const char* tokentype_iden[] =
 {
-	"eof", "any", "string", "comment",
+	"none", "any", "string", "comment",
 	"directive", "float", "symbol", "identifier",
-	"space", "unknown"
-};
-static const char* datatype_iden[] =
-{
+	"space", "unknown", "","",
+	"","","","",
 	"func",
 	"int","~float~",
 	"num","posi",
 	"~str~","astr","u8str",
-};// {TODO} temporarily
+};
 
 enum datatype// for Nesnode.iden
 {
-	dt_any = 0x10,
-	dt_func,
+	//dt_any,
+	dt_func = 0x10,
 
 	dt_int,// ChrAr ptrdiff_t
 	dt_float = tok_number,// CdeAr double
@@ -52,13 +52,18 @@ enum datatype// for Nesnode.iden
 
 // ---- ---- ---- ---- erro.c ---- ---- ---- ----
 
-void cabort(_Need_free char* str);
+void cabort(char* str, size_t row, size_t col);
 
 void NnodeReleaseTofreeCotlab(void* n);
+void InodeReleaseTofreeElementCotlab(void* n);
+void InodeReleaseTofreeCotlab(void* n);
 void DnodesReleaseTofreeCotlab(dnode* inp);
 void TnodesReleaseTofreeCotlab(void* inp);
 
 // ---- ---- ---- ---- executor.c ---- ---- ---- ----
+
+//
+void InodePrint(inode*** inp);
 
 // keep input `nest` zero.
 void NnodePrint(const Nesnode* nnod, unsigned nest);

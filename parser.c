@@ -1,4 +1,6 @@
 // ASCII GPL3 COTLAB Copyright (C) 2023 Dosconio
+
+#pragma warning(disable:6384)
 #include <alice.h>// duplicate with ulibex.ustring
 #include "ulibex.h"
 #include <stdio.h>
@@ -41,10 +43,10 @@ const char** OperatorsList[] =
 	OperatorLR1,OperatorLR2,OperatorLR3,OperatorLR4,OperatorLR5,OperatorLR6,OperatorLR7,OperatorLR8,OperatorLR9,OperatorLRA,
 	OperatorRLL,OperatorRL,
 	OPTOREX1
-};
+};//{TODO} Fina suggests: add suffix-factorial, format `int!'
 unsigned char OperatorsOrder[] = { 0,1, 0,0,0,0,0,0,0,0,0,0, 1,1,1 };// 0 Left-Right
 
-#define _OPERATOR_GROUP_LEVEL_MAX 3// <GOAL> 14
+#define _OPERATOR_GROUP_LEVEL_MAX 4// <GOAL> 14
 
 // ---- ---- File design: from the bottom to top 
 
@@ -104,8 +106,10 @@ int NnodeSymbolsDivide(nnode* inp, size_t width, size_t idx, nnode* parent)
 
 void StrTokenNestLinkage(nnode* inp)
 {
-	const char* txt[] = { "PREPOSI","PRENEGA","ARIADD","ARISUB","ARIMUL","ARIDIV", "_dbg_test", "system", "load" };
-	void* fns[] = { DtrPREPOSI, DtrPRENEGA, DtrARIADD, DtrARISUB, DtrARIMUL, DtrARIDIV, Dtr_dbg_test, Dtr_system, Dtr_load };
+	const char* txt[] = { "PREPOSI","PRENEGA","ARIADD","ARISUB","ARIMUL","ARIDIV","ARIREM","ARIPOW",
+		"_dbg_test", "system", "load", "int", "ASSIGN"};
+	void* fns[] = { DtrPREPOSI, DtrPRENEGA, DtrARIADD, DtrARISUB, DtrARIMUL, DtrARIDIV, DtrARIREM, DtrARIPOW,
+		Dtr_dbg_test, Dtr_system, Dtr_load, Dtr_int,DtrASSIGN };
 	for (nnode* crt = inp; crt; crt = crt->right)
 	{
 		if (crt->subf)
@@ -128,13 +132,39 @@ void StrTokenNestLinkage(nnode* inp)
 			}
 		}
 	}
-
 }
+
+//
+void StrTokenNestVariable(nnode* inp, nnode* parent)
+{
+	//{TEMP} just snesitive inod-chain
+	for (nnode* crt = inp; crt; crt = crt->right)
+	{
+		if (crt->subf)
+			StrTokenNestVariable(crt->subf, crt);
+		if ((crt->class == tok_iden) && crt->addr && !(parent && !StrCompare(parent->addr, "ASSIGN") && parent->subf == crt))
+		{
+			inode* des = InodeLocate(inods[1], crt->addr, 0);
+			if (des)
+			{
+				if (des->type == tok_number)
+				{
+					srs(crt->addr, CoeCpy(des->data));
+				}
+				else srs(crt->addr, StrHeap(des->data));
+				crt->class = des->type;
+			}
+			// {erro} [iden sym_not_parens_first] & !crt
+		}
+	}
+}
+
 
 // Return 1 if success, 0 for failure.
 // ANY/SYM/SPA/NL SYM(pre +-) STR/NUM/IDEN/FUNC(2) SYM/SPA/NL/NULL
 static int StrTokenNestParseOperatorPrefix(nnode* inp, nnode* parent, int* exist_sym)
 {
+	// PRE + -
 	nnode* crt = inp;
 	*exist_sym = 0;
 	while (crt->right) crt = crt->right;
@@ -173,6 +203,51 @@ static const char* StrTokenNestParseOperatorGetIdenByChar(const char** lst, size
 		if (lst[i << 1][0] == op && !lst[i << 1][1]) return lst[(i << 1) + 1];
 	}
 	return 0;
+}
+
+// Return 1 if success, 0 for failure.
+// ANY/SYM/SPA/NL STR/NUM/IDEN/FUNC(1) SYM(+-*/) STR/NUM/IDEN/FUNC(2) SYM/SPA/NL/NULL
+static int StrTokenNestParseOperatorRL(nnode** inp, nnode* parent, int* exist_sym, unsigned rank)
+{
+	// RL =
+	nnode* crt = *inp;
+	if (rank) return 0;
+	const char* symlst = (const char* []){ "=" } [rank] ;
+	const char** idens = (const char** []){ OperatorRL } [rank] ;
+	size_t symnum = (size_t[]){ sizeof(OperatorRL) / sizeof(*OperatorRL) / 2 } [rank] ;
+	*exist_sym = 0;
+	while (crt->right) crt = crt->right;
+	for (; crt; crt = crt->left)
+	{
+		if (crt->class != tok_sym) continue; else *exist_sym = 1;
+		if (!crt->left || !crt->right) break;
+		char* idx;
+		if (idx = (char*)StrIndexCharsRight(crt->addr, "="))
+		{
+			(void)NnodeSymbolsDivide(crt, 1, idx - crt->addr, parent);
+			nnode* opleft = crt->left;
+			nnode* opright = crt->right;
+			size_t leftt = crt->left->class;
+			size_t lleftt = crt->left->left ? crt->left->left->class : tok_any;// o zo tok_EOF
+			size_t rightt = crt->right->class;
+			size_t rrightt = 0;
+			if ((leftt == tok_string || leftt == tok_number || leftt == tok_iden || leftt == dt_func) &&// bound to have the left for 2-opt operator
+				(lleftt == tok_any || lleftt == tok_sym || lleftt == tok_space || crt->left->left->row < crt->row) && crt->left->row == crt->row &&
+				(rightt == tok_string || rightt == tok_number || rightt == tok_iden || rightt == dt_func) &&
+				(!crt->right->right || (rrightt = crt->right->right->class) == tok_sym || rrightt == tok_space || crt->right->right->row > crt->row) && crt->right->row == crt->row)
+			{
+				nnode* fn = NnodeInsert(crt->left, 0, parent);
+				fn->addr = StrHeap(StrTokenNestParseOperatorGetIdenByChar(idens, symnum, *idx));
+				fn->class = dt_func;
+				if (crt->left == *inp) *inp = fn;// {HERE}
+				NnodeRelease(crt, parent, NnodeReleaseTofreeCotlab);
+				NnodeBlock(fn, opleft, opright, parent);
+				crt = fn;
+				break;
+			}
+		}
+	}
+	return 1;
 }
 
 // Return 1 if success, 0 for failure.
@@ -226,7 +301,6 @@ static int StrTokenNestParseOperatorLR(nnode** inp, nnode* parent, int* exist_sy
 static int StrTokenNestParseOperator(nnode* inp, nnode* parent, unsigned level)
 {
 	// rest tok_type{any, v:str, v:num, sym, v:iden, spa, func}
-	if (level < 1) level = 1;
 	int exist_sym = 0, state = 0;
 	if (!inp) return 1;
 	
@@ -234,13 +308,19 @@ static int StrTokenNestParseOperator(nnode* inp, nnode* parent, unsigned level)
 lup:;
 	switch (level)
 	{
-	case 1: goto point_pref;
-	case 2: goto point_muldiv;
+	case 0: goto point_pref;
+	case 1: goto point_pow;
+	case 2: goto point_muldiv;// besides rem
 	case 3: goto point_addsub;
+	case 4: goto point_assign;
 	default: goto endolup;
 	}
 point_pref:
 	state = StrTokenNestParseOperatorPrefix(inp, parent, &exist_sym);
+	if (!state) return state;// return by eax
+	goto endolup;
+point_pow:
+	state = StrTokenNestParseOperatorLR(&inp, parent, &exist_sym, 0);
 	if (!state) return state;// return by eax
 	goto endolup;
 point_muldiv:
@@ -249,6 +329,10 @@ point_muldiv:
 	goto endolup;
 point_addsub:// keep similar with muldiv now
 	state = StrTokenNestParseOperatorLR(&inp, parent, &exist_sym, 2);
+	if (!state) return state;// return by eax
+	goto endolup;
+point_assign:// keep similar with muldiv now
+	state = StrTokenNestParseOperatorRL(&inp, parent, &exist_sym, 0);
 	if (!state) return state;// return by eax
 	goto endolup;
 endolup:
@@ -353,7 +437,7 @@ nnode* StrTokenParse(Tode* inp)
 		if (crt->type == tok_comment ||
 			crt->type == tok_space &&
 			crt->row == crt->left->row &&
-			(crt->row == crt->next->row || !crt->next))
+			(!crt->next || crt->row == crt->next->row))
 			StrTokenThrow(crt);
 		crt = next;
 	}
@@ -435,8 +519,7 @@ nnode* StrTokenParse(Tode* inp)
 	{
 		if (crtnes->row == crtnes->left->row)
 		{
-			printf("Failure of parsing on the line %llu.", 1 + crtnes->row);
-			erro("Check that each line only has one item;");
+			cabort("Valid expression of series nest.", crtnes->row, crtnes->col);
 			return 0;// {TODO} Free Process
 		}
 		crtnes = crtnes->right;
@@ -446,6 +529,7 @@ nnode* StrTokenParse(Tode* inp)
 	NnodePrint(nestok->right, 0);
 #endif
 	// linkage;
+	StrTokenNestVariable(nestok, 0);
 	StrTokenNestLinkage(nestok);
 
 	return nestok;// temp

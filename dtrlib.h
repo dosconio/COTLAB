@@ -6,6 +6,12 @@ dnode* Dtr_load(dnode* const callinfo);
 
 dnode* Dtr_dbg_test(dnode* const callinfo);
 
+dnode* Dtr_int(dnode* const callinfo);
+
+dnode* DtrASSIGN(dnode* const callinfo);// =
+
+// ---- ARITH ----
+
 dnode* DtrPREPOSI(dnode* const callinfo);
 
 dnode* DtrPRENEGA(dnode* const callinfo);
@@ -18,4 +24,6 @@ dnode* DtrARIMUL(dnode* const callinfo);
 
 dnode* DtrARIDIV(dnode* const callinfo);
 
+dnode* DtrARIREM(dnode* const callinfo);
 
+dnode* DtrARIPOW(dnode* const callinfo);

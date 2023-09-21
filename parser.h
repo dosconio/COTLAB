@@ -25,7 +25,7 @@
 - Convert all operators into function calling form;
 - Check that each line only has one item;
 - Echo for debug;
-- Linkage; [StrTokenLinkage: fill linked_func]
+- Linkage; [StrTokenNestVariable: constant and variable; StrTokenLinkage: fill linked_func]
 */
 
 #ifndef HrnCotlabParser

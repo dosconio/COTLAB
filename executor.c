@@ -6,6 +6,30 @@
 #include "parser.h"
 #include "executor.h"
 
+void InodePrint(inode*** inp)
+{
+	// inp zo inode*[3]*; 
+	//{}inode* pre_macros = inp[0][0];
+	inode* sensi_objs = inp[0][1];
+	//{}inode* isens_objs = inp[0][2];
+	puts("");
+	//{}puts("Here are sensitive objects:");
+	inode* crt = sensi_objs;
+	while (crt)
+	{
+		if (crt->data && crt->type == dt_float)
+			printf("%s <%s%s> %lf\n", crt->addr, crt->property ? "const " : "",
+				tokentype_iden[crt->type], CoeToDouble((void*)crt->data));
+		else if(crt->data && crt->type == dt_str)
+			printf("%s <%s%s> \"%s\"\n", crt->addr, crt->property ? "const " : "",
+				tokentype_iden[crt->type], (char*)crt->data);
+		else
+			printf("%s <%s%s> %s\n", crt->addr, crt->property ? "const " : "",
+				tokentype_iden[crt->type], crt->data ? crt->data : "#");
+		crt = crt->right;
+	}
+}
+
 void NnodePrint(const Nesnode* nnod, unsigned nest)
 {
 	const Nesnode* crt = nnod;
@@ -13,9 +37,9 @@ void NnodePrint(const Nesnode* nnod, unsigned nest)
 	{
 		for (unsigned i = 0; i < nest; i++) putchar('\t');
 		if (crt->class == dt_float)
-			printf("Nnode [%s] %lf\n", crt->class >= 16 ? datatype_iden[crt->class - 16] : tokentype_iden[crt->class], CoeToDouble((void*)crt->addr));
+			printf("Nnode [%s] %lf\n", tokentype_iden[crt->class], CoeToDouble((void*)crt->addr));
 		else
-			printf("Nnode [%s] %s\n", crt->class >= 16 ? datatype_iden[crt->class - 16] : tokentype_iden[crt->class], crt->addr);
+			printf("Nnode [%s] %s\n", tokentype_iden[crt->class], crt->addr);
 		if (crt->subf) NnodePrint(crt->subf, nest + 1);
 		crt = crt->right;
 	}
@@ -23,6 +47,7 @@ void NnodePrint(const Nesnode* nnod, unsigned nest)
 
 void CotPrint(tnode* inp)
 {
+	CoeInit();
 	for (tnode* crt = inp->right; crt; crt = crt->next)
 	{
 		if (crt->type == tok_number)
@@ -44,6 +69,15 @@ void CotPrint(tnode* inp)
 	}
 }
 
+static void CotUpdateLast(dnode* res)
+{
+	if (!res) return;
+	if (res->type == dt_float)
+		InodeUpdate(inods[1], "last", (void*)CoeCpy((void*)res->addr), dt_float, 2, InodeReleaseTofreeElementCotlab);
+	else
+		InodeUpdate(inods[1], "last", StrHeap(res->addr), res->type, 2, InodeReleaseTofreeElementCotlab);
+}
+
 nnode* CotExecuate(nnode* inp)
 {
 	// Nest ---> Linear of (func, imm-value)
@@ -52,7 +86,14 @@ nnode* CotExecuate(nnode* inp)
 	CoeInit();
 	for (nnode* crt = inp; crt; crt = crt->right)
 	{
-		if (!crt->subf && !crt->bind) continue;
+		if (crt->class == tok_any)continue;
+		if (!crt->subf && !crt->bind)
+		{
+			dnode* crttmp = NnodeToDnode(MemHeap(crt, sizeof *crt));
+			CotUpdateLast(crttmp);
+			memf(crttmp);
+			continue;
+		}
 		// f(h(1,2)); pi(); (1);
 		CotExecuate(crt->subf);
 		Dnode* f_in = NnodeToDnode(crt->subf);// one of alias of crt->subf
@@ -63,6 +104,7 @@ nnode* CotExecuate(nnode* inp)
 			DnodesReleaseTofreeCotlab(f_in);
 		}
 		else res = f_in;
+		CotUpdateLast(res);
 		if (res)
 		{
 			//{TEMP} just for 1 return.
