@@ -1,6 +1,7 @@
 # ASCII RFV21
-#{ISSUE} cannot run this, because the parse of script is not interpreted line by line.
 b=2^2^2
-c=5.2%2 # implicit conversion
-d=b+last
+c=b%5 # implicit conversion
+"use `last' in the script"
+d=last
 f=e+pi
+g=sin(2!!)

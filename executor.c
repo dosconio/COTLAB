@@ -1,10 +1,13 @@
 // ASCII GPL3 COTLAB Copyright (C) 2023 Dosconio
-#include "ulibex.h"
+
 #include <stdio.h>
 #include <cdear.h>
 #include <inttypes.h>
+#include "cotlab.h"
 #include "parser.h"
 #include "executor.h"
+
+static size_t cabort_col, cabort_row;
 
 void InodePrint(inode*** inp)
 {
@@ -25,7 +28,7 @@ void InodePrint(inode*** inp)
 				tokentype_iden[crt->type], (char*)crt->data);
 		else
 			printf("%s <%s%s> %s\n", crt->addr, crt->property ? "const " : "",
-				tokentype_iden[crt->type], crt->data ? crt->data : "#");
+				tokentype_iden[crt->type], crt->data ? (char*)crt->data : "#");
 		crt = crt->right;
 	}
 }
@@ -72,30 +75,79 @@ void CotPrint(tnode* inp)
 static void CotUpdateLast(dnode* res)
 {
 	if (!res) return;
+	if (!res->addr)
+	{
+		InodeUpdate(inods[1], "last", 0, 0, 0x80, InodeReleaseTofreeElementCotlab);
+		return;
+	}
 	if (res->type == dt_float)
-		InodeUpdate(inods[1], "last", (void*)CoeCpy((void*)res->addr), dt_float, 2, InodeReleaseTofreeElementCotlab);
+		InodeUpdate(inods[1], "last", (void*)CoeCpy((void*)res->addr), dt_float, 0x80, InodeReleaseTofreeElementCotlab);
 	else
-		InodeUpdate(inods[1], "last", StrHeap(res->addr), res->type, 2, InodeReleaseTofreeElementCotlab);
+		InodeUpdate(inods[1], "last", StrHeap(res->addr), res->type, 0x80, InodeReleaseTofreeElementCotlab);
 }
 
-nnode* CotExecuate(nnode* inp)
+// Return 1 for delete current, 0 for none, 2 for clear all.
+int CotApplyObject(nnode* inp, nnode* parent)
+{
+	//{TEMP} just snesitive inod-chain
+	nnode* crt = inp;
+	if (crt->class != tok_iden || !crt->addr) return 0;
+	if (!(parent && !StrCompare(parent->addr, "ASSIGN") && parent->subf == crt))
+	{
+		inode* des = InodeLocate(inods[1], crt->addr, 0);
+		if (des)
+		{
+			if (!des->data) return 1;// empty
+			if (des->type == tok_number)
+			{
+				srs(crt->addr, CoeCpy(des->data));
+			}
+			else srs(crt->addr, StrHeap(des->data));
+			crt->class = des->type;
+		}
+		else
+		{
+			cabort_col = crt->col - (crt->addr ? StrLength(crt->addr) : 0);
+			cabort_row = crt->row;
+			return 2;
+		}
+	}
+	return 0;
+}
+
+int CotExecuate(nnode* inp, nnode* parent)// use parent to replace return nnode*
 {
 	// Nest ---> Linear of (func, imm-value)
 	// (1) ---> 1;  pi() ---> 3.1416; ...
 	//{TODO} Multi-in and multi-out
+	int state = 0;
 	CoeInit();
-	for (nnode* crt = inp; crt; crt = crt->right)
+	nnode* next = 0;
+	for (nnode* crt = inp; crt; crt = next)
 	{
+		next = crt->right;
+		if (!CotExecuate(crt->subf, crt))
+			if (parent)	return 0;
+			else goto errp;
+		if (crt->class == tok_iden)// No else case with the below
+			if(state = CotApplyObject(crt, parent))
+			{
+				if (state == 2)
+					if (parent)	return 0;
+					else goto errp;
+				next = crt->right;
+				NnodeRelease(crt, parent, 0);
+				continue;
+			}
 		if (crt->class == tok_any)continue;
 		if (!crt->subf && !crt->bind)
 		{
 			dnode* crttmp = NnodeToDnode(MemHeap(crt, sizeof *crt));
-			CotUpdateLast(crttmp);
+			if (!parent) CotUpdateLast(crttmp);
 			memf(crttmp);
 			continue;
 		}
 		// f(h(1,2)); pi(); (1);
-		CotExecuate(crt->subf);
 		Dnode* f_in = NnodeToDnode(crt->subf);// one of alias of crt->subf
 		Dnode* res = 0;
 		if (crt->bind)
@@ -104,7 +156,7 @@ nnode* CotExecuate(nnode* inp)
 			DnodesReleaseTofreeCotlab(f_in);
 		}
 		else res = f_in;
-		CotUpdateLast(res);
+		if (!parent) CotUpdateLast(res);
 		if (res)
 		{
 			//{TEMP} just for 1 return.
@@ -125,4 +177,9 @@ nnode* CotExecuate(nnode* inp)
 			crt = tmp;
 		}
 	}
+	return 1;
+errp:
+	NnodesRelease(inp, 0, NnodeReleaseTofreeCotlab);
+	cabort("Undefined identifier", cabort_row, cabort_col);// current only reason
+	return 0;
 }

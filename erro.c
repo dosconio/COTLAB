@@ -1,10 +1,12 @@
 // ASCII
+#pragma warning(disable:4005)// redefine of macro
+#pragma warning(disable:6011)
 #define _LIB_STRING_HEAP
 #include <setjmp.h>
-#include <ustring.h>
-#include <cdear.h>
 #include <inttypes.h>
 #include <stdio.h>
+#include <ustring.h>
+#include <cdear.h>
 
 Dnode* SGAWarnChain;//{TODO} warnings chain
 size_t SGANumofWarn = 0;
@@ -24,25 +26,28 @@ void warn(char* str)
 void erro(char* str)
 {
 	SGAErroMsg = str;
+	printf("Erro: %s \n", str);//{TEMP OCCUPY}
+	return;//{TEMP OCCUPY}
 	if (errjb)
 		longjmp(errjb, 1);
 }
 
 void cabort(char* str, size_t row, size_t col)
 {
-	col++;
+	row++;
 	if (!COT_CRTFILE)
-		fprintf(stderr, "ERROR R%" PRIuPTR " C%" PRIuPTR " %s\n", row, col, str);
-	else fprintf(stderr, "ERROR F\"%s\" R%" PRIuPTR " C%" PRIuPTR " %s\n", COT_CRTFILE, row, col, str);
+		fprintf(stderr, "Error R%" PRIuPTR " C%" PRIuPTR " %s\n", row, col, str);
+	else fprintf(stderr, "Error F\"%s\" R%" PRIuPTR " C%" PRIuPTR " %s\n", COT_CRTFILE, row, col, str);
 	if (errjb) longjmp(errjb, 1);
 }
 
 void NnodeReleaseTofreeCotlab(void* n)
 {
 	nnode* nod = n;
-	if (nod->class == tok_number)
-		CoeDel((void*)nod->addr);
-	else memf(nod->addr);
+	if (nod->addr)
+		if (nod->class == tok_number)
+			CoeDel((void*)nod->addr);
+		else memf(nod->addr);
 	memf(n);
 }
 

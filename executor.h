@@ -3,8 +3,8 @@
 #ifndef HrnCotlabExecutor
 #define HrnCotlabExecutor
 
-// {TEMP} Print directly. Do not free execs.
-nnode* CotExecuate(nnode* inp);
+// Return 1 for success, 0 for failure.
+int CotExecuate(nnode* inp, nnode* parent);
 
 void CotPrint(tnode* inp);
 

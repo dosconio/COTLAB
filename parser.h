@@ -31,7 +31,7 @@
 #ifndef HrnCotlabParser
 #define HrnCotlabParser
 
-#include "ulibex.h"
+#include "cotlab.h"
 
 typedef dnode* (*fstruc_t)(dnode* const);
 

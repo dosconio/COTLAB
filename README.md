@@ -6,7 +6,7 @@
 - alias: SGA-Generation 3rd (Rewrite from zero)
 - license: GPL-3.0 license
 - author: @`dosconio` in GitHub, dosconyo@gmail.com for email 
-- special: Everything can be a function.
+- special: Everything can be a function. All expressions use immediate sequence points.
 - language name: **Datura**
 
 > Please give me a :star: if you are interested.

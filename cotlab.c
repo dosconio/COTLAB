@@ -2,12 +2,11 @@
 // This is free software, and you are welcome to redistribute it
 // under certain conditions; type `$ cot license' for details.
 
-#include "ulibex.h"
+#define _CRT_SECURE_NO_WARNINGS
 #include <stdlib.h>
 #include <stdio.h>
 #include <inttypes.h>
 #include <setjmp.h>
-#include <conio.h>
 #include <cdear.h>
 #include "cotlab.h"
 #include "parser.h"// need ustring
@@ -24,8 +23,6 @@ ulibsym(0x1000)
 #define gets_s(str,len) gets(str)
 #endif
 
-char buffer[0x1000];
-char buffer2[0x1000];
 //
 typedef char arnbuf[0x1000];
 arnbuf arna_tempor,// parse pool
@@ -38,14 +35,15 @@ FILE* fp;
 char* ptr;
 size_t tasks = 0;
 inode** inods = 0;
-int fgetnext() { return fgetc(fp); }
-void fseekback(ptrdiff_t l) { fseek(fp, l, SEEK_CUR); }
-int sgetnext() { return (*ptr) ? *ptr++ : EOF; }
+int state;
+int fgetnext(void) { return fgetc(fp); }
+void fseekback(ptrdiff_t l) { fseek(fp, (long)l, SEEK_CUR); }
+int sgetnext(void) { return (*ptr) ? *ptr++ : EOF; }
 void sseekback(ptrdiff_t l) { ptr += l; }
 //
 
 
-// src[0:file, 1:textbuf]
+// Return zero for success for init_total_errmech. src[0:file, 1:textbuf]
 int cottask(int src, void* point)// {TODO} receive varlist inode[3]*
 {
 	extern char* COT_CRTFILE;
@@ -53,7 +51,7 @@ int cottask(int src, void* point)// {TODO} receive varlist inode[3]*
 	tasks++;
 	jmp_buf errjb_stack;
 	MemCopyN(&errjb_stack, &errjb, sizeof errjb);
-	init_total_errmech(1);
+	init_total_errmech(0);
 	void* stack_last_pointer_file = fp;
 	void* stack_last_pointer_str = ptr;
 	tnode* ori;
@@ -68,7 +66,8 @@ int cottask(int src, void* point)// {TODO} receive varlist inode[3]*
 	ori = StrTokenAll(!src ? fgetnext : sgetnext,
 		!src ? fseekback : sseekback, arna_tempor);
 	res = StrTokenParse(ori);// {TODO} param:inodes [data:0] for del item
-	CotExecuate(res);
+	state = CotExecuate(res, 0);
+	(void)state;
 	ori = NnodeToTnode(res);
 	CotPrint(ori);
 	TnodesReleases(ori, TnodesReleaseTofreeCotlab);
@@ -78,6 +77,7 @@ endo:
 	fp = stack_last_pointer_file;
 	MemCopyN(&errjb, &errjb_stack, sizeof errjb);
 	tasks--;
+	return 0;
 }
 
 int main(int argc, char** argv)
@@ -119,9 +119,22 @@ int main(int argc, char** argv)
 		while (1)
 		{
 			(void)getcwd(arna_tmpext, sizeof arna_tmpext);
-			printf("\n<Datura %s> ", arna_tmpext);
+			printf("\n<%s> ", arna_tmpext);
 			gets_s(arna_tmpslv, 0x1000);
 			if (!StrCompare(arna_tmpslv, "exit")) break;
+			if (!StrCompare(arna_tmpslv, "help"))
+			{
+				puts("\nCOTLAB Generation 3, GNU General Public License 3 (cotlab.org)\n"
+					"  * Weaver Dosconio (dosconyo@gmail.com / doscon.io)\n"
+					"  * Models UNISYM{ ChrAr,CoeAr }");
+				continue;
+			}
+			if (!StrCompare(arna_tmpslv, "fast"))
+			{
+				puts("FASTER-MODE!");
+				LIB_CDE_PRECISE_SHOW = 6;
+				continue;
+			}
 			if (!StrCompare(arna_tmpslv, "cls"))
 			{
 #ifdef _WinNT
