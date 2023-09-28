@@ -10,6 +10,7 @@
 #include "dtrlib.h"
 
 static size_t cabort_col, cabort_row;
+static char* cabort_txt;
 
 // ---- ---- ---- ---- Operator List ---- ---- ---- ----
 // Enable parial of {Pref; LR0; LR1; LR2; RL}
@@ -115,10 +116,12 @@ static int StrTokenNestLinkage(nnode* inp)
 	const char* txt[] = { "PREPOSI","PRENEGA","ARIADD","ARISUB","ARIMUL","ARIDIV","ARIREM","ARIPOW","ARIFACT",
 		"_dbg_test", "system", "load", "int", "ASSIGN",
 		"sin", "cos", "tan", "asin","acos","atan","sinh", "cosh", "tanh", "asinh","acosh","atanh",
+		"cal",
 	};// Catious strcat here
 	void* fns[] = { DtrPREPOSI, DtrPRENEGA, DtrARIADD, DtrARISUB, DtrARIMUL, DtrARIDIV, DtrARIREM, DtrARIPOW, DtrARIFACT,
 		Dtr_dbg_test, Dtr_system, Dtr_load, Dtr_int,DtrASSIGN,
 		DtrSin, DtrCos, DtrTan,DtrASin,DtrACos,DtrATan,DtrSinh, DtrCosh, DtrTanh,DtrASinh,DtrACosh,DtrATanh,
+		DtrCalendar,
 	};
 	for (nnode* crt = inp; crt; crt = crt->right)
 	{
@@ -141,7 +144,8 @@ static int StrTokenNestLinkage(nnode* inp)
 			{
 				cabort_row = crt->row;
 				cabort_col = crt->col - (crt->addr ? StrLength(crt->addr) : 0);
-				fprintf(stderr, "Unknown function %s(...): ", crt->addr);
+				cabort_txt = StrHeap(crt->addr);
+				//fprintf(stderr, "Unknown function %s(...): ", crt->addr);
 				return 0;
 			}
 		}
@@ -431,7 +435,7 @@ static int StrTokenNestParse(nnode* inp, nnode* parent)
 		crt = crt->right;
 		if (crt && (crt->row != crt->left->row)) last_parens = 0;
 	}
-	if (crtnest) erro("Match error");
+	//{TODO} if (crtnest) erro("Match error");
 	StrTokenNestParseOperator((parent && parent->subf) ? parent->subf : inp, parent, 0);
 	return 1;
 enderro:
@@ -543,9 +547,9 @@ nnode* StrTokenParse(Tode* inp)
 	{
 		if (crtnes->row == crtnes->left->row)
 		{
-			cabort_row = crtnes->row, cabort_col = crtnes->col - (crt->addr ? StrLength(crt->addr) : 0);
+			cabort_row = crtnes->row, cabort_col = crtnes->col - (crtnes->addr ? StrLength(crtnes->addr) : 0);
 			NnodesRelease(nestok, 0, NnodeReleaseTofreeCotlab);
-			cabort("Invalid expression.", cabort_row, cabort_col);
+			cabort("Invalid expression.", cabort_row, cabort_col, 0);
 			return 0;
 		}
 		crtnes = crtnes->right;
@@ -560,7 +564,8 @@ nnode* StrTokenParse(Tode* inp)
 	if (!state)
 	{
 		NnodesRelease(nestok, 0, NnodeReleaseTofreeCotlab);
-		cabort("Invalid function identifier.", cabort_row, cabort_col);
+		cabort("Unknown identifier.", cabort_row, cabort_col, cabort_txt);
+		cabort_txt = 0;
 		return 0;
 	}
 	return nestok;// temp

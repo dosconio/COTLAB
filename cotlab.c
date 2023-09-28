@@ -8,20 +8,13 @@
 #include <inttypes.h>
 #include <setjmp.h>
 #include <cdear.h>
+#include <consio.h>
 #include "cotlab.h"
 #include "parser.h"// need ustring
 #include "executor.h"
-#ifdef _WinNT
-	#include <direct.h>
-	#define getcwd _getcwd
-#elif defined(_Linux)
-	#include <unistd.h>
-#endif
 ulibsym(0x1000)
 
-#ifdef __GNUC__
-#define gets_s(str,len) gets(str)
-#endif
+#define COT_SHELL_MODE_FAST 1
 
 //
 typedef char arnbuf[0x1000];
@@ -65,6 +58,11 @@ int cottask(int src, void* point)// {TODO} receive varlist inode[3]*
 	}
 	ori = StrTokenAll(!src ? fgetnext : sgetnext,
 		!src ? fseekback : sseekback, arna_tempor);
+	if (ori->right && !ori->right->right)// single iden ---> func
+	{
+		if (ori->right->type == tok_iden && !InodeLocate(inods[1], ori->right->addr, 0))
+			StrTokenAppend(ori->right, "()", 2, tok_sym, 0, ori->right->col + 2);
+	}// {FUTURE}[convert `iden entity0 ... entityN` to iden(...)] sin 1 ---> sin(1)
 	res = StrTokenParse(ori);// {TODO} param:inodes [data:0] for del item
 	state = CotExecuate(res, 0);
 	(void)state;
@@ -83,11 +81,13 @@ endo:
 int main(int argc, char** argv)
 {
 	int option = 0;//1[shell] 2[command] 3[script]
+	int mode = 0;
 	inode* pre_macros = 0;// > nsens_objs
 	inode* sensi_objs = 0;// > isens_objs
 	inode* isens_objs = 0;// inode::property as [...|MUTABLE]
 	init_total_errmech(1);
 	CoeInit();
+	ConStyleNormal();
 	// ---- ---- pre-set constants ---- ---- 
 	sensi_objs = InodeUpdate(0, "last", 0, 0, tok_EOF, InodeReleaseTofreeElementCotlab);// LOCK
 	InodeUpdate(sensi_objs, "pi", (void*)CoePi(), tok_number, 1, InodeReleaseTofreeElementCotlab);
@@ -118,20 +118,29 @@ int main(int argc, char** argv)
 		printf(CotTitle);
 		while (1)
 		{
-			(void)getcwd(arna_tmpext, sizeof arna_tmpext);
-			printf("\n<%s> ", arna_tmpext);
-			gets_s(arna_tmpslv, 0x1000);
+			if (mode == COT_SHELL_MODE_FAST)
+			{
+				printf(">>> ");
+			}
+			else if (!mode)
+			{
+				(void)ConCurrentDirectory(arna_tmpext, sizeof arna_tmpext);
+				printf("\n<%s> ", arna_tmpext);
+			}
+			else break;
+			ConScanLine(arna_tmpslv, sizeof arna_tmpslv);
 			if (!StrCompare(arna_tmpslv, "exit")) break;
 			if (!StrCompare(arna_tmpslv, "help"))
 			{
 				puts("\nCOTLAB Generation 3, GNU General Public License 3 (cotlab.org)\n"
 					"  * Weaver Dosconio (dosconyo@gmail.com / doscon.io)\n"
-					"  * Models UNISYM{ ChrAr,CoeAr }");
+					"  * Models UNISYM");
 				continue;
 			}
 			if (!StrCompare(arna_tmpslv, "fast"))
 			{
 				puts("FASTER-MODE!");
+				mode = COT_SHELL_MODE_FAST;
 				LIB_CDE_PRECISE_SHOW = 6;
 				continue;
 			}
@@ -163,5 +172,5 @@ int main(int argc, char** argv)
 	}
 	InodesRelease(sensi_objs, InodeReleaseTofreeCotlab);
 	//{TODO} InodesRelease(isens_objs, InodeReleaseTofreeCotlab);
-	if(malc_count) printf("System leak: %llu times!\n", malc_count);
+	if(malc_count) printf("System leak: %" PRIiPTR " times!\n", malc_count);
 }

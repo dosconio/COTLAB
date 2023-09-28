@@ -8,6 +8,7 @@
 #include "executor.h"
 
 static size_t cabort_col, cabort_row;
+static char* cabort_txt;
 
 void InodePrint(inode*** inp)
 {
@@ -109,6 +110,7 @@ int CotApplyObject(nnode* inp, nnode* parent)
 		{
 			cabort_col = crt->col - (crt->addr ? StrLength(crt->addr) : 0);
 			cabort_row = crt->row;
+			cabort_txt = StrHeap(crt->addr);
 			return 2;
 		}
 	}
@@ -180,6 +182,7 @@ int CotExecuate(nnode* inp, nnode* parent)// use parent to replace return nnode*
 	return 1;
 errp:
 	NnodesRelease(inp, 0, NnodeReleaseTofreeCotlab);
-	cabort("Undefined identifier", cabort_row, cabort_col);// current only reason
+	cabort("Undefined identifier", cabort_row, cabort_col, cabort_txt);// current only reason
+	cabort_txt = 0;
 	return 0;
 }

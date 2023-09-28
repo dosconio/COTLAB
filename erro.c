@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <ustring.h>
 #include <cdear.h>
+#include <consio.h>
+
 
 Dnode* SGAWarnChain;//{TODO} warnings chain
 size_t SGANumofWarn = 0;
@@ -20,7 +22,7 @@ char* COT_CRTFILE;
 void warn(char* str)
 {
 	SGANumofWarn++;
-	printf("WARN: %s\n", str);
+	printf("Warn %s\n", str);
 	///if (!SGAFirstWarn) SGAFirstWarn = str;
 }
 void erro(char* str)
@@ -32,12 +34,21 @@ void erro(char* str)
 		longjmp(errjb, 1);
 }
 
-void cabort(char* str, size_t row, size_t col)
+void cabort(const char* str, size_t row, size_t col, char* txt)
 {
 	row++;
+	ConStyleAbnormal();
 	if (!COT_CRTFILE)
-		fprintf(stderr, "Error R%" PRIuPTR " C%" PRIuPTR " %s\n", row, col, str);
-	else fprintf(stderr, "Error F\"%s\" R%" PRIuPTR " C%" PRIuPTR " %s\n", COT_CRTFILE, row, col, str);
+		fprintf(stderr, "Error R%" PRIuPTR " C%" PRIuPTR , row, col);
+	else fprintf(stderr, "Error F\"%s\" R%" PRIuPTR " C%" PRIuPTR, COT_CRTFILE, row, col);
+	ConStyleNormal();
+	fprintf(stderr, " %s", str);
+	if (txt) 
+	{
+		fprintf(stderr, " (%s)", txt);
+		memf(txt);
+	}
+	fprintf(stderr, "\n");
 	if (errjb) longjmp(errjb, 1);
 }
 

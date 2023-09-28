@@ -34,3 +34,7 @@ If you want to participate in developing COTLAB, contact us, or your work may be
 If you would like to build your own branch and won't merge it back, your can fork *COTLAB* and follow *GPL-v3*'s rules, and may also append your information in `AUTHOR.md` and write down the repository name and license of the branch.
 
 Thanks for yours.
+
+### Depend
+
+- ArinaMgk (Phina Ren) - **UNISYM**(Apache 2 )

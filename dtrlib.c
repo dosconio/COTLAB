@@ -67,7 +67,11 @@ dnode* DtrASSIGN(dnode* const callinfo)
 	dnode* ret = 0;
 	if (callright->type == dt_float)
 	{
-		InodeUpdate(inods[1], callinfo->addr, (void*)CoeCpy((void*)callright->addr), dt_float, 0x80, InodeReleaseTofreeElementCotlab);
+		if (!InodeUpdate(inods[1], callinfo->addr, (void*)CoeCpy((void*)callright->addr), dt_float, 0x80, InodeReleaseTofreeElementCotlab))
+		{
+			warn("The assignment is invalid.");
+			return 0;
+		}
 		ret = zalcof(dnode);
 		ret->addr = (void*)CoeCpy((void*)callright->addr);
 	}
@@ -77,13 +81,21 @@ dnode* DtrASSIGN(dnode* const callinfo)
 	}
 	else if (callright->addr)
 	{
-		InodeUpdate(inods[1], callinfo->addr, StrHeap(callright->addr), callright->type, 0x80, InodeReleaseTofreeElementCotlab);
+		if (!InodeUpdate(inods[1], callinfo->addr, StrHeap(callright->addr), callright->type, 0x80, InodeReleaseTofreeElementCotlab))
+		{
+			warn("The assignment is invalid.");
+			return 0;
+		}
 		ret = zalcof(dnode);
 		ret->addr = StrHeap(callright->addr);
 	}
 	else
 	{
-		InodeUpdate(inods[1], callinfo->addr, 0, 0, 0x80, InodeReleaseTofreeElementCotlab);
+		if (!InodeUpdate(inods[1], callinfo->addr, 0, 0, 0x80, InodeReleaseTofreeElementCotlab))
+		{
+			warn("The assignment is invalid.");
+			return 0;
+		}
 		return 0;
 	}
 	if (ret)

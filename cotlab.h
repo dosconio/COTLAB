@@ -60,7 +60,7 @@ enum datatype// for Nesnode.iden
 
 // ---- ---- ---- ---- erro.c ---- ---- ---- ----
 
-void cabort(char* str, size_t row, size_t col);
+void cabort(const char* str, size_t row, size_t col, char* txt);
 
 void NnodeReleaseTofreeCotlab(void* n);
 void InodeReleaseTofreeElementCotlab(void* n);

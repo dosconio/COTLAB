@@ -1,6 +1,3 @@
 .vs/
 COTLAB.sln
 COTLAB.vcxproj*
-cotlab.org/res/
-*.rc
-*.aps
