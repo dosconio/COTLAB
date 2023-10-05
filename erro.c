@@ -7,8 +7,9 @@
 #include <stdio.h>
 #include <ustring.h>
 #include <cdear.h>
+#include <numar.h>
 #include <consio.h>
-
+#include "parser.h"
 
 Dnode* SGAWarnChain;//{TODO} warnings chain
 size_t SGANumofWarn = 0;
@@ -52,13 +53,27 @@ void cabort(const char* str, size_t row, size_t col, char* txt)
 	if (errjb) longjmp(errjb, 1);
 }
 
+inline static void CotResourceRemove(void* obj, size_t typ)
+{
+	if (!obj) return;
+	switch (typ)
+	{
+	case tok_number:
+		CoeDel(obj);
+		break;
+	case dt_num:
+		NumDel(obj);
+		break;
+	default:
+		memf(obj);
+		break;
+	}
+}
+
 void NnodeReleaseTofreeCotlab(void* n)
 {
 	nnode* nod = n;
-	if (nod->addr)
-		if (nod->class == tok_number)
-			CoeDel((void*)nod->addr);
-		else memf(nod->addr);
+	CotResourceRemove(nod->addr, nod->class);
 	memf(n);
 }
 
@@ -66,12 +81,7 @@ void InodeReleaseTofreeElementCotlab(void* n)
 {
 	if (!n) return;
 	inode* nod = n;
-	if (nod->type == tok_number)
-	{
-		CoeDel((void*)nod->data);
-	}
-	else memf(nod->data);
-
+	CotResourceRemove(nod->data, nod->type);
 	nod->data = 0;
 }
 
@@ -80,33 +90,24 @@ void InodeReleaseTofreeCotlab(void* n)
 	if (!n) return;
 	inode* nod = n;
 	memf(nod->addr);
-	if (nod->type == tok_number)
-	{
-		CoeDel(nod->data);
-	}
-	else if (nod->data) memf(nod->data);
+	CotResourceRemove(nod->data, nod->type);
 	memf(nod);
-
-	//{TODO}
 }
 
-void DnodesReleaseTofreeCotlab(dnode* inp)
+// !!! call by just COTLAB but passed for unisym, so this operate multi-items
+void DnodesReleaseCotlab(dnode* inp)
 {
 	dnode* first = inp;
 	if (!inp) return;
-	if (inp->next) DnodesReleaseTofreeCotlab(inp->next);
-	if (first->type == tok_number)
-		CoeDel((void*)first->addr);
-	else if (first->addr) memfree(first->addr);
+	if (inp->next) DnodesReleaseCotlab(inp->next);
+	CotResourceRemove(first->addr, first->type);
 	memfree(first);
 }
 
 void TnodesReleaseTofreeCotlab(void* inp)
 {
 	tnode* first = inp;
-	if (first->type == tok_number)
-		CoeDel((void*)first->addr);
-	else if(first->addr) memfree(first->addr);
+	CotResourceRemove(first->addr, first->type);
 	memfree(first);
 }
 

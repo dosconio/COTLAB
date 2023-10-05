@@ -1,5 +1,5 @@
 usym = ../unisym/c/
-depend_usym = $(usym)source/datime.c $(usym)source/consio.c $(usym)source/cdear.c $(usym)source/ustring.c $(usym)source/hstring.c
+depend_usym = $(usym)source/datime.c $(usym)source/consio.c $(usym)source/numar.c $(usym)source/cdear.c $(usym)source/ustring.c $(usym)source/hstring.c
 builds = cotlab.c erro.c parser.c executor.c dtrlib.c dtr_float.c dtrfunc.c
 # Windows
 w64gcc:

@@ -1,5 +1,9 @@
 // ASCII GPL3 COTLAB Copyright (C) 2023 Dosconio
 
+void ArithExplicitCoversionRise(dnode* const a, size_t typ);
+
+void ArithImplicitCoversion(dnode* const a, dnode* const b);
+
 dnode* Dtr_system(dnode* const callinfo);
 
 dnode* Dtr_load(dnode* const callinfo);

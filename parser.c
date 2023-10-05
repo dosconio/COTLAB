@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <inttypes.h>
 #include <cdear.h>
+#include <numar.h>
 #include "parser.h"
 #include "dtrlib.h"
 
@@ -50,10 +51,8 @@ unsigned char OperatorsOrder[] = { 0,1, 0,0,0,0,0,0,0,0,0,0, 1,1,1 };// 0 Left-R
 
 // ---- ---- File design: from the bottom to top 
 
-#define isidnsym(type)(type == tok_any || type == tok_sym || type == tok_space)
-#define isentity(type)(type == tok_string || type == tok_number || type == tok_iden || type == dt_func || type == dt_int)
-
-
+#define isidnsym(type)(type<tok_else)
+#define isentity(type)(type>tok_else)
 
 int NnodeSymbolsDivide(nnode* inp, size_t width, size_t idx, nnode* parent)
 {
@@ -456,11 +455,6 @@ nnode* StrTokenParse(Tode* inp)
 	//
 	// Solve comment, Trim trailing or middle spaces;
 	//
-	while (inp && inp->type == tok_comment)
-	{
-		inp = inp->next;
-		StrTokenThrow(inp->left);
-	}
 	crt = inp;
 	tnode* next = 0;
 	while (crt)
@@ -508,7 +502,16 @@ nnode* StrTokenParse(Tode* inp)
 		dt_float;
 		if (crt->type == tok_number)
 		{
-			if (StrIndexCharsExcept(crt->addr, "0123456789"))
+			char* spanchr;
+			if (spanchr = (char*)StrIndexChars(crt->addr, "ij"))
+			{
+				*spanchr = 0;
+				crt->type = dt_num;
+				coe* tmpcoe = CoeFromLocale(crt->addr);
+				srs(crt->addr, NumNewComplex("+0", "+0", "+1", tmpcoe->coff, tmpcoe->expo, tmpcoe->divr));
+				CoeDel(tmpcoe);
+			}
+			else if (StrIndexCharsExcept(crt->addr, "0123456789"))
 			{
 				srs(crt->addr, CoeFromLocale(crt->addr));
 			}
@@ -521,10 +524,8 @@ nnode* StrTokenParse(Tode* inp)
 	}
 	// ---- ---- ---- ---- LN ---> NS ---- ---- ---- ----
 	// Restructure for nested
-	// {WISH} UNISYM ADD SUPPORT FOR TOK-NEST BESIDE TOK-LINEAR
 	//
 	crt = inp; crtnes = nestok = zalc(sizeof(nnode));
-	// {TODO} tnode2nnode
 	{
 		TnodeToNnode(crtnes, crt);
 		tnode* p = crt->next;

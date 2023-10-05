@@ -17,17 +17,17 @@ extern size_t LIB_CDE_PRECISE_SHOW;
 
 static const char* tokentype_iden[] =
 {
-	"none", "any", "string", "comment",
-	"directive", "float", "symbol", "identifier",
-	"space", "unknown", "","",
+	"none", "any", "comment", "directive",
+	"symbol", "space", "unknown", "identifier",
+	"string", "number", "","",
 	"","","","",
 	"func",
 	"int","~float~",
-	"num","posi",
+	"complex","posi",
 	"~str~","astr","u8str",
 };
 
-enum datatype// for Nesnode.iden
+enum datatype// for Nesnode.iden, all entity
 {
 	//dt_any,
 	dt_func = 0x10,
@@ -65,7 +65,7 @@ void cabort(const char* str, size_t row, size_t col, char* txt);
 void NnodeReleaseTofreeCotlab(void* n);
 void InodeReleaseTofreeElementCotlab(void* n);
 void InodeReleaseTofreeCotlab(void* n);
-void DnodesReleaseTofreeCotlab(dnode* inp);
+void DnodesReleaseCotlab(dnode* inp);
 void TnodesReleaseTofreeCotlab(void* inp);
 
 // ---- ---- ---- ---- executor.c ---- ---- ---- ----

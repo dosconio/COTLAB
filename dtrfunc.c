@@ -14,8 +14,8 @@ dnode* DtrCalendar(dnode* const callinfo)
 	time_t timep;
 	struct tm* tmp;
 	time(&timep);
-	tmp = gmtime(&timep);
-	pasts = GetMoexDayIdentity(1900+tmp->tm_year, 1+tmp->tm_mon, &weekday, &mondays);
+	tmp = localtime(&timep);
+	pasts = DatimeCalendar(1900 + tmp->tm_year, 1 + tmp->tm_mon, &weekday, &mondays);
 	puts("");
 	printf("    %s %d\n", ((char* []){"   January ", "  February ", "     March ",
 		"     April ", "       May ", "      June ",

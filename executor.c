@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <cdear.h>
+#include <numar.h>
 #include <inttypes.h>
 #include "cotlab.h"
 #include "parser.h"
@@ -9,6 +10,7 @@
 
 static size_t cabort_col, cabort_row;
 static char* cabort_txt;
+int COT_EXE_AUTOLF;
 
 void InodePrint(inode*** inp)
 {
@@ -21,15 +23,25 @@ void InodePrint(inode*** inp)
 	inode* crt = sensi_objs;
 	while (crt)
 	{
-		if (crt->data && crt->type == dt_float)
+		if (!crt->data)
+		{
+			printf("%s <%s%s> %s\n", crt->addr, crt->property ? "const " : "",
+				tokentype_iden[crt->type], "#null");
+		}
+		if (crt->type == dt_float)
 			printf("%s <%s%s> %lf\n", crt->addr, crt->property ? "const " : "",
 				tokentype_iden[crt->type], CoeToDouble((void*)crt->data));
-		else if(crt->data && crt->type == dt_str)
+		else if (crt->type == dt_num)
+		{
+			printf("%s <%s%s> [%lf %lfj]\n", crt->addr, crt->property ? "const " : "",
+				tokentype_iden[crt->type], CoeToDouble(&((numa*)crt->data)->Real), CoeToDouble(&((numa*)crt->data)->Imag));
+		}
+		else if(crt->type == dt_str)
 			printf("%s <%s%s> \"%s\"\n", crt->addr, crt->property ? "const " : "",
 				tokentype_iden[crt->type], (char*)crt->data);
 		else
 			printf("%s <%s%s> %s\n", crt->addr, crt->property ? "const " : "",
-				tokentype_iden[crt->type], crt->data ? (char*)crt->data : "#");
+				tokentype_iden[crt->type], crt->data);
 		crt = crt->right;
 	}
 }
@@ -42,6 +54,10 @@ void NnodePrint(const Nesnode* nnod, unsigned nest)
 		for (unsigned i = 0; i < nest; i++) putchar('\t');
 		if (crt->class == dt_float)
 			printf("Nnode [%s] %lf\n", tokentype_iden[crt->class], CoeToDouble((void*)crt->addr));
+		else if (crt->class == dt_num)
+		{
+			printf("Nnode [%s] [%lf %lfj]\n", tokentype_iden[crt->class], CoeToDouble(&((numa*)crt->addr)->Real), CoeToDouble(&((numa*)crt->addr)->Imag));
+		}
 		else
 			printf("Nnode [%s] %s\n", tokentype_iden[crt->class], crt->addr);
 		if (crt->subf) NnodePrint(crt->subf, nest + 1);
@@ -49,27 +65,38 @@ void NnodePrint(const Nesnode* nnod, unsigned nest)
 	}
 }
 
-void CotPrint(tnode* inp)
+void CotPrint(tnode* inp)// Linear
 {
+	int single = inp->right && !inp->right->right;
 	CoeInit();
 	for (tnode* crt = inp->right; crt; crt = crt->next)
 	{
-		if (crt->type == tok_number)
+		if (!crt->addr) continue;
+		if(!single) printf("Line %" PRIiPTR ": ", crt->row + 1);
+		if (crt->type == dt_float)
 		{
 			char* p;
 			p = CoeToLocale((void*)crt->addr, 1);
-			printf("Line %" PRIiPTR ": %s\n", crt->row + 1, p);//{TODO} use tnode as dnode
+			printf("%s", p);
 			memf(p);
 		}
-		else if (crt->type == tok_string)
+		else if (crt->type == dt_num)
 		{
-			printf("Line %" PRIiPTR ": \"%s\"\n", crt->row + 1, crt->addr);
+			char* p0, *p1; numa* n = (numa*)crt->addr;
+			p0 = CoeToLocale(&n->Real, 1);
+			p1 = CoeToLocale(&n->Imag, 1);
+			printf("[%s %s]", p0, p1);
+			memf(p0); memf(p1);
+		}
+		else if (crt->type == dt_str)
+		{
+			printf("\"%s\"", crt->addr);
 		}
 		else
 		{
-			if (crt->addr)
-				printf("Line %" PRIiPTR ": %s\n", crt->row + 1, crt->addr);//{TODO} use tnode as dnode
+			printf("%s", crt->addr);
 		}
+		if (COT_EXE_AUTOLF) puts("");
 	}
 }
 
@@ -82,7 +109,9 @@ static void CotUpdateLast(dnode* res)
 		return;
 	}
 	if (res->type == dt_float)
-		InodeUpdate(inods[1], "last", (void*)CoeCpy((void*)res->addr), dt_float, 0x80, InodeReleaseTofreeElementCotlab);
+		InodeUpdate(inods[1], "last", (void*)CoeCpy((void*)res->addr), res->type, 0x80, InodeReleaseTofreeElementCotlab);
+	else if(res->type == dt_num)
+		InodeUpdate(inods[1], "last", (void*)NumCpy((void*)res->addr), res->type, 0x80, InodeReleaseTofreeElementCotlab);
 	else
 		InodeUpdate(inods[1], "last", StrHeap(res->addr), res->type, 0x80, InodeReleaseTofreeElementCotlab);
 }
@@ -102,6 +131,10 @@ int CotApplyObject(nnode* inp, nnode* parent)
 			if (des->type == tok_number)
 			{
 				srs(crt->addr, CoeCpy(des->data));
+			}
+			else if (des->type == dt_num)
+			{
+				srs(crt->addr, NumCpy(des->data));
 			}
 			else srs(crt->addr, StrHeap(des->data));
 			crt->class = des->type;
@@ -155,7 +188,7 @@ int CotExecuate(nnode* inp, nnode* parent)// use parent to replace return nnode*
 		if (crt->bind)
 		{
 			res = ((fstruc_t)crt->bind)(f_in);
-			DnodesReleaseTofreeCotlab(f_in);
+			DnodesReleaseCotlab(f_in);
 		}
 		else res = f_in;
 		if (!parent) CotUpdateLast(res);

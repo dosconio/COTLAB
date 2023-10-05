@@ -2,7 +2,9 @@
 #include <stdio.h>
 #include "cotlab.h"
 #include <cdear.h>
+#include <numar.h>
 #include "parser.h"
+#include "dtrlib.h"
 
 #ifdef _MSC_VER// for MSVC
 #define ermsg ("Bad input of %s" __FUNCIDEN__ "().")
@@ -10,80 +12,96 @@
 #define ermsg (char*)__FUNCIDEN__
 #endif
 
-static inline dnode* DJump(dnode* const callinfo, coe* (*CoeF)(coe*))
+static inline dnode* DJump(dnode* const callinfo, coe* (*CoeF)(coe*), void (*NumF)(numa*))
 {
-	coe* co = 0;
+	dnode* ret = zalcof(dnode);
 	if (callinfo && callinfo->addr)
 	{
+		if (callinfo->type == dt_int)
+			ArithExplicitCoversionRise(callinfo, dt_float);
 		if (callinfo->type == dt_float)
-			co = CoeCpy((void*)callinfo->addr);
-		else if (callinfo->type == dt_int)
-			co = CoeNew(callinfo->addr, "+0", "+1");
+		{
+			ret->addr = (void*)CoeCpy((void*)callinfo->addr);
+			CoeF((void*)ret->addr);
+			ret->type = dt_float;
+		}
+		else if (callinfo->type == dt_num)
+		{
+			ret->addr = (void*)NumCpy((void*)callinfo->addr);
+			NumF((void*)ret->addr);
+			ret->type = dt_num;
+		}
+		else
+		{
+			memf(ret);
+			erro(ermsg);
+		}
 	}
-	else erro(ermsg);
-	dnode* ret = zalcof(dnode);
-	ret->addr = (void*)CoeF(co);
-	ret->type = dt_float;
+	else
+	{
+		memf(ret);
+		erro(ermsg);
+	}
 	return ret;
 }
 
 dnode* DtrSin(dnode* const callinfo)
 {
-	return DJump(callinfo, CoeSin);
+	return DJump(callinfo, CoeSin, NumSin);
 }
 
 dnode* DtrCos(dnode* const callinfo)
 {
-	return DJump(callinfo, CoeCos);
+	return DJump(callinfo, CoeCos, NumCos);
 }
 
 dnode* DtrTan(dnode* const callinfo)
 {
-	return DJump(callinfo, CoeTan);
+	return DJump(callinfo, CoeTan, NumTan);
 }
 
 dnode* DtrASin(dnode* const callinfo)
 {
-	return DJump(callinfo, CoeAsin);
+	return DJump(callinfo, CoeAsin, NumAsin);
 }
 
 dnode* DtrACos(dnode* const callinfo)
 {
-	return DJump(callinfo, CoeAcos);
+	return DJump(callinfo, CoeAcos, NumAcos);
 }
 
 dnode* DtrATan(dnode* const callinfo)
 {
-	return DJump(callinfo, CoeAtan);
+	return DJump(callinfo, CoeAtan, NumAtan);
 }
 
 dnode* DtrSinh(dnode* const callinfo)
 {
-	return DJump(callinfo, CoeSinh);
+	return DJump(callinfo, CoeSinh, NumSinh);
 }
 
 dnode* DtrCosh(dnode* const callinfo)
 {
-	return DJump(callinfo, CoeCosh);
+	return DJump(callinfo, CoeCosh, NumCosh);
 }
 
 dnode* DtrTanh(dnode* const callinfo)
 {
-	return DJump(callinfo, CoeTanh);
+	return DJump(callinfo, CoeTanh, NumTanh);
 }
 
 dnode* DtrASinh(dnode* const callinfo)
 {
-	return DJump(callinfo, CoeAsinh);
+	return DJump(callinfo, CoeAsinh, NumAsinh);
 }
 
 dnode* DtrACosh(dnode* const callinfo)
 {
-	return DJump(callinfo, CoeAcosh);
+	return DJump(callinfo, CoeAcosh, NumAcosh);
 }
 
 dnode* DtrATanh(dnode* const callinfo)
 {
-	return DJump(callinfo, CoeAtanh);
+	return DJump(callinfo, CoeAtanh, NumAtanh);
 }
 

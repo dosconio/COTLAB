@@ -24,6 +24,7 @@ arnbuf arna_tempor,// parse pool
 //
 extern char* SGAErroMsg;
 extern jmp_buf errjb;
+extern int COT_EXE_AUTOLF;
 FILE* fp;
 char* ptr;
 size_t tasks = 0;
@@ -116,11 +117,12 @@ int main(int argc, char** argv)
 	{
 	case 1:
 		printf(CotTitle);
+		COT_EXE_AUTOLF = 1;
 		while (1)
 		{
 			if (mode == COT_SHELL_MODE_FAST)
 			{
-				printf(">>> ");
+				printf("\n>>> ");
 			}
 			else if (!mode)
 			{
@@ -129,17 +131,20 @@ int main(int argc, char** argv)
 			}
 			else break;
 			ConScanLine(arna_tmpslv, sizeof arna_tmpslv);
+			StrDeprefixSpaces(arna_tmpslv);
 			if (!StrCompare(arna_tmpslv, "exit")) break;
 			if (!StrCompare(arna_tmpslv, "help"))
 			{
-				puts("\nCOTLAB Generation 3, GNU General Public License 3 (cotlab.org)\n"
-					"  * Weaver Dosconio (dosconyo@gmail.com / doscon.io)\n"
-					"  * Models UNISYM");
+				puts("\nCOTLAB: Her SGA-3 (doscon.io), GNU GPL-3 (cotlab.org)\n"
+					"  |"
+					"\n  + Doshou Haruno [Dscn.Org.Chief] (dosconyo@gmail.com)"
+					"\n  + Ren    Phina  [NONE.Org.Advis]"
+				);
 				continue;
 			}
-			if (!StrCompare(arna_tmpslv, "fast"))
+			if (!StrCompare(arna_tmpslv, "mode") && mode != COT_SHELL_MODE_FAST)
 			{
-				puts("FASTER-MODE!");
+				puts("FAST - MODE!");
 				mode = COT_SHELL_MODE_FAST;
 				LIB_CDE_PRECISE_SHOW = 6;
 				continue;

@@ -2,6 +2,46 @@
 
 
 
+
+
+----
+
+
+
+### Update 2023 寒露
+
+Big change: Complex Arithmetic;
+
+20230929 stage:
+
+- copyright information
+- change directive `fast` into `mode`
+- cancel `Line ...` prefix for single line output, for pipe using, but endless case appears e.g. `cot 1+2 | cot`
+- fix mistake of negative operation
+
+20230930 stage:
+
+- help USL remake `Cde::coeln2`, `hs::StrTokenAll`(to accept `""`), change `#ifndef _ARN_FLAG_DISABLE` to `#ifdef _ARN_FLAG_ENABLE` in `ustring.c`.
+
+  - > I conflicted with Arina in `CoeAr`, which, while capable of representing a wide range of numbers, greatly reduced hardware compatibility and computation speed. It is hoped that a limited length version of her CDE architecture will be supported directly by hardware in the future.
+
+- spaces before a line is invalid except the console shell mode.
+
+- accept strcat `+` , e.g. `"abc"+"def" ---> "abcdef"`
+
+20231001 stage:
+
+- help USL `DatimeCalendar` and update COTLAB
+- use locale time but UTC time by default
+
+20231005 stage:
+
+- support datatype and operations of **complex**, e.g. `1.2e-3j`
+
+---
+
+
+
 ### Update 2023 中秋節
 
 Last stage fv21. Release 20230924
@@ -31,8 +71,6 @@ Last stage fv21. Release 20230924
 - add icon for MSVC version
 - `1` is integer type but float type, and `+ -` `int` `+ - *` `int` ---> `int`
 - Linux host support with simple test, e.g. Ubuntu Community
-
-
 
 20230926 stage:
 

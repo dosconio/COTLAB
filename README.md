@@ -19,7 +19,9 @@
 
 `-c`: execute an instant command
 
+### Cautious
 
+- Use indent correctly, for example, spaces before a line is invalid except the console shell mode.
 
 ### Commit
 
