@@ -4,6 +4,43 @@
 
 
 
+
+
+---
+
+
+
+### Update 2023 重陽
+
+20231005 stage:
+
+- `str` `*` `int` → `strstr...`
+
+20231008 stage:
+
+- fix little mistake: `list` directive prints double `last` because of the `if` statement does not return and enter the next judgement
+
+20231011 stage:
+
+- fix the mistake of UNISYM's `TokenAll` about number as identifier
+- a batch file can be dragged to COT.EXE and keep in shell, so you can see the result
+
+20231016 stage:
+
+- directive `cd`, `dir`
+- decide two officially building versions: `Win64`(aka `W64`); `Lin64(Ubuntu)`(aka `U64`)
+- help fix-bug yo `CoeDig` caused `sin(0.0001) ---> ,0.000000`, and re-sure its round modes
+- fix-bug: the digits of `acos()` returned does not match the show_precise
+- change prompt `<E:\PROJ\SVGN\COTLAB>` to `>E>\PROJ\SVGN\COTLAB>` for example, to match `>>> `
+
+20231017 stage:
+
+- prompt for Windows to `>E>PROJ/SVGN/COTLAB>` for example
+- directive `fdump`
+- instant function `ffset` with `dest_file sors_file sec_id`
+
+
+
 ----
 
 

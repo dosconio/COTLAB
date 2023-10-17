@@ -28,7 +28,7 @@ void InodePrint(inode*** inp)
 			printf("%s <%s%s> %s\n", crt->addr, crt->property ? "const " : "",
 				tokentype_iden[crt->type], "#null");
 		}
-		if (crt->type == dt_float)
+		else if (crt->type == dt_float)
 			printf("%s <%s%s> %lf\n", crt->addr, crt->property ? "const " : "",
 				tokentype_iden[crt->type], CoeToDouble((void*)crt->data));
 		else if (crt->type == dt_num)
@@ -41,7 +41,7 @@ void InodePrint(inode*** inp)
 				tokentype_iden[crt->type], (char*)crt->data);
 		else
 			printf("%s <%s%s> %s\n", crt->addr, crt->property ? "const " : "",
-				tokentype_iden[crt->type], crt->data);
+				tokentype_iden[crt->type], (char*)crt->data);
 		crt = crt->right;
 	}
 }
@@ -96,7 +96,7 @@ void CotPrint(tnode* inp)// Linear
 		{
 			printf("%s", crt->addr);
 		}
-		if (COT_EXE_AUTOLF) puts("");
+		if (COT_EXE_AUTOLF || !single) puts("");
 	}
 }
 

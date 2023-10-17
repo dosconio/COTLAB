@@ -290,6 +290,17 @@ dnode* DtrARIMUL(dnode* const callinfo)
 	dnode* cright = callinfo->right;
 	dnode* ret = zalcof(dnode);
 	ArithImplicitCoversion(callinfo, cright);
+	if (callinfo->type == dt_str && cright->type == dt_int)
+	{
+		ret->addr = StrHeap("");
+		while (cright->addr[1] != '0')
+		{
+			srs(ret->addr, StrHeapAppend(ret->addr, callinfo->addr));
+			srs(cright->addr, ChrSub(cright->addr, "+1"));
+		}
+		ret->type = dt_str;
+		return ret;
+	}
 	if (callinfo->type == dt_int && cright->type == dt_int)
 	{
 		ret->addr = ChrMul(callinfo->addr, cright->addr);

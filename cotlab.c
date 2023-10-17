@@ -1,6 +1,6 @@
 // ASCII GPL3 COTLAB Copyright (C) 2023 Dosconio
 // This is free software, and you are welcome to redistribute it
-// under certain conditions; type `$ cot license' for details.
+// under certain conditions; type `$ cot help' for details.
 
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdlib.h>
@@ -10,9 +10,10 @@
 #include <cdear.h>
 #include <consio.h>
 #include "cotlab.h"
-#include "parser.h"// need ustring
+#include "parser.h"
 #include "executor.h"
 ulibsym(0x1000)
+char ulibver[16] = { "Not detected." };// from 'unisym/datura/version'
 
 #define COT_SHELL_MODE_FAST 1
 
@@ -94,10 +95,42 @@ int main(int argc, char** argv)
 	InodeUpdate(sensi_objs, "pi", (void*)CoePi(), tok_number, 1, InodeReleaseTofreeElementCotlab);
 	InodeUpdate(sensi_objs, "e", (void*)CoeE(), tok_number, 1, InodeReleaseTofreeElementCotlab);
 
+	fp = fopen("../unisym/datura/version", "r");
+	if (fp)
+	{
+		for (size_t i = 0; i < sizeof(ulibver) - 1; i++)
+		{
+			int c = fgetc(fp);
+			if (c == EOF)
+			{
+				ulibver[i] = 0;
+				break;
+			}
+			ulibver[i] = c;
+		}
+		fclose(fp);
+	}
+
 	inods = (inode * []){ pre_macros, sensi_objs, isens_objs };
 	// ---- ---- main ---- ---- 
 	ptr = argc < 3 ? 0 : argv[2];
-	if (argc <= 1 || !StrCompare(argv[1], "-s")) option = 1;
+	if (argc == 5 && !StrCompare(argv[1], "ffset"))
+	{
+		extern int FFSet(const char* dest, const char* sors, size_t sector);
+		FFSet(argv[2], argv[3], atoins(argv[4]));
+		return 0;
+	}
+	else if (argc == 3 && !StrCompare(argv[1], "fdump"))
+	{
+		extern int FileDump(const char* argv);
+		FileDump(argv[2]);
+		return 0;
+	}
+	if (argc <= 1 || !StrCompare(argv[1], "-s")) 
+	{
+		option = 1;
+		printf(CotTitle);
+	}
 	else if (argc >= 3 && !StrCompare(argv[1], "-f")) option = 3;
 	else if (argc >= 3 && !StrCompare(argv[1], "-c")) option = 2;
 	else if (argc > 1)
@@ -106,17 +139,22 @@ int main(int argc, char** argv)
 		ptr = argv[1];
 		if (tmpf)
 		{
-			option = 3;
+			option = 4;// After run, keep shell.
 			fclose(tmpf);
 		}
 		else option = 2;
 	}
-	else option = 1;
+	else
+	{
+		puts("Bad command.");
+		return -1;
+	}
+
 	// else puts("Unknown command.");
+apply_opt:
 	switch (option)
 	{
 	case 1:
-		printf(CotTitle);
 		COT_EXE_AUTOLF = 1;
 		while (1)
 		{
@@ -126,8 +164,21 @@ int main(int argc, char** argv)
 			}
 			else if (!mode)
 			{
-				(void)ConCurrentDirectory(arna_tmpext, sizeof arna_tmpext);
-				printf("\n<%s> ", arna_tmpext);
+				(void)ConGetCurrentDirectory(arna_tmpext, sizeof arna_tmpext);
+				if (arna_tmpext[1] == ':')
+				{
+					size_t path_len = 0;
+					arna_tmpext[1] = '>';
+					while(arna_tmpext[path_len])
+					{
+						if (arna_tmpext[path_len] == '\\')
+							arna_tmpext[path_len] = '/';
+						path_len++;
+					}
+					MemRelative(arna_tmpext + 3, path_len - 2, -1);
+					printf("\n>%s> ", arna_tmpext);
+				}
+				else printf("\n<%s> ", arna_tmpext);
 			}
 			else break;
 			ConScanLine(arna_tmpslv, sizeof arna_tmpslv);
@@ -136,10 +187,11 @@ int main(int argc, char** argv)
 			if (!StrCompare(arna_tmpslv, "help"))
 			{
 				puts("\nCOTLAB: Her SGA-3 (doscon.io), GNU GPL-3 (cotlab.org)\n"
-					"  |"
-					"\n  + Doshou Haruno [Dscn.Org.Chief] (dosconyo@gmail.com)"
-					"\n  + Ren    Phina  [NONE.Org.Advis]"
-				);
+					"   ||"
+					"\n   |+ Doshou Haruno [Dscn.Org.Chief] (dosconyo@gmail.com)"
+					"\n   |+ Ren    Phina  [None.Org.Advis]"
+				);// A: Author
+				printf("   + UNISYM: %s", ulibver);
 				continue;
 			}
 			if (!StrCompare(arna_tmpslv, "mode") && mode != COT_SHELL_MODE_FAST)
@@ -163,6 +215,23 @@ int main(int argc, char** argv)
 				InodePrint(&inods);
 				continue;
 			}
+			else if (!StrCompareN(arna_tmpslv, "cd ", 3))
+			{
+				if (ConSetCurrentDirectory(arna_tmpslv + 3))// not system(arna_tmpslv);
+					fprintf(stderr, "Invaild Working Path.");// cabort is for cottask
+				continue;
+			}
+			else if (!StrCompare(arna_tmpslv, "dir"))
+			{
+				system("dir");
+				continue;
+			}
+			else if (!StrCompareN(arna_tmpslv, "fdump ", 6))
+			{
+				extern int FileDump(const char* argv);
+				FileDump(arna_tmpslv + 6);
+				continue;
+			}
 			cottask(1, arna_tmpslv);
 		}
 		break;
@@ -172,10 +241,16 @@ int main(int argc, char** argv)
 	case 3:// script
 		cottask(0, ptr);
 		break;
+	case 4:
+		cottask(0, ptr);
+		option = 1;
+		goto apply_opt;
+		break;// formal
 	default:
 		break;
 	}
 	InodesRelease(sensi_objs, InodeReleaseTofreeCotlab);
 	//{TODO} InodesRelease(isens_objs, InodeReleaseTofreeCotlab);
 	if(malc_count) printf("System leak: %" PRIiPTR " times!\n", malc_count);
+	return 0;
 }
