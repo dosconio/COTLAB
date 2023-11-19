@@ -10,12 +10,14 @@ dnode* DtrCalendar(dnode* const callinfo)
 {
 	//{TEMP} no input of some month
 	unsigned pasts;
-	unsigned char weekday, mondays;
+	unsigned char wday, mondays;
 	time_t timep;
 	struct tm* tmp;
 	time(&timep);
 	tmp = localtime(&timep);
-	pasts = DatimeCalendar(1900 + tmp->tm_year, 1 + tmp->tm_mon, &weekday, &mondays);
+	pasts = herspan(1900 + tmp->tm_year, 1 + tmp->tm_mon, 1);
+	wday = weekday(1900+ tmp->tm_year, 1 + tmp->tm_mon, 1);
+	mondays = moondays(1900 + tmp->tm_year, 1 + tmp->tm_mon);
 	puts("");
 	printf("    %s %d\n", ((char* []){"   January ", "  February ", "     March ",
 		"     April ", "       May ", "      June ",
@@ -23,7 +25,7 @@ dnode* DtrCalendar(dnode* const callinfo)
 		"   October ", "  November ", "  December "})[tmp->tm_mon], tmp->tm_year + 1900);
 	puts("Sun.Mon.Tue.Wed.Thr.Fri.Sat.");
 	ConStyleAbnormal();
-	ConCursorMoveRight(weekday << 2);
+	ConCursorMoveRight(wday << 2);
 	for (unsigned char i = 1; i <= mondays; i++)
 	{
 		if (i == tmp->tm_mday)
@@ -36,13 +38,13 @@ dnode* DtrCalendar(dnode* const callinfo)
 			printf("|%02d]", i);
 		else
 			printf("[%02d]", i);
-		weekday++; pasts++;
-		if (weekday >= 7)
+		wday++; pasts++;
+		if (wday >= 7)
 		{
 			ConStyleNormal();
 			puts("");
 			ConStyleAbnormal();
-			weekday = 0;
+			wday = 0;
 		}
 	}
 	ConStyleNormal();

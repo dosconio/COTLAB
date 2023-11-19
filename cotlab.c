@@ -95,7 +95,7 @@ int main(int argc, char** argv)
 	InodeUpdate(sensi_objs, "pi", (void*)CoePi(), tok_number, 1, InodeReleaseTofreeElementCotlab);
 	InodeUpdate(sensi_objs, "e", (void*)CoeE(), tok_number, 1, InodeReleaseTofreeElementCotlab);
 
-	fp = fopen("../unisym/datura/version", "r");
+	fp = fopen("../unisym/lib/Script/datura/version", "r");
 	if (fp)
 	{
 		for (size_t i = 0; i < sizeof(ulibver) - 1; i++)
@@ -110,7 +110,7 @@ int main(int argc, char** argv)
 		}
 		fclose(fp);
 	}
-
+	
 	inods = (inode * []){ pre_macros, sensi_objs, isens_objs };
 	// ---- ---- main ---- ---- 
 	ptr = argc < 3 ? 0 : argv[2];
