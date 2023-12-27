@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <inttypes.h>
 #include <setjmp.h>
-#include <cdear.h>
+#include <coear.h>
 #include <consio.h>
 #include "cotlab.h"
 #include "parser.h"
@@ -60,10 +60,10 @@ int cottask(int src, void* point)// {TODO} receive varlist inode[3]*
 	}
 	ori = StrTokenAll(!src ? fgetnext : sgetnext,
 		!src ? fseekback : sseekback, arna_tempor);
-	if (ori->right && !ori->right->right)// single iden ---> func
+	if (ori->next && !ori->next->next)// single iden ---> func
 	{
-		if (ori->right->type == tok_iden && !InodeLocate(inods[1], ori->right->addr, 0))
-			StrTokenAppend(ori->right, "()", 2, tok_sym, 0, ori->right->col + 2);
+		if (ori->next->type == tok_identy && !InodeLocate(inods[1], ori->next->addr, 0))
+			StrTokenAppend(ori->next, "()", 2, tok_symbol, 0, ori->next->col + 2);
 	}// {FUTURE}[convert `iden entity0 ... entityN` to iden(...)] sin 1 ---> sin(1)
 	res = StrTokenParse(ori);// {TODO} param:inodes [data:0] for del item
 	state = CotExecuate(res, 0);
@@ -114,18 +114,7 @@ int main(int argc, char** argv)
 	inods = (inode * []){ pre_macros, sensi_objs, isens_objs };
 	// ---- ---- main ---- ---- 
 	ptr = argc < 3 ? 0 : argv[2];
-	if (argc == 5 && !StrCompare(argv[1], "ffset"))
-	{
-		extern int FFSet(const char* dest, const char* sors, size_t sector);
-		FFSet(argv[2], argv[3], atoins(argv[4]));
-		return 0;
-	}
-	else if (argc == 3 && !StrCompare(argv[1], "fdump"))
-	{
-		extern int FileDump(const char* argv);
-		FileDump(argv[2]);
-		return 0;
-	}
+
 	if (argc <= 1 || !StrCompare(argv[1], "-s")) 
 	{
 		option = 1;
@@ -224,12 +213,6 @@ apply_opt:
 			else if (!StrCompare(arna_tmpslv, "dir"))
 			{
 				system("dir");
-				continue;
-			}
-			else if (!StrCompareN(arna_tmpslv, "fdump ", 6))
-			{
-				extern int FileDump(const char* argv);
-				FileDump(arna_tmpslv + 6);
 				continue;
 			}
 			cottask(1, arna_tmpslv);

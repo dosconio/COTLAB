@@ -2,6 +2,8 @@
 #ifndef _LIB_ARITHMETIC_SHELL_3
 #define _LIB_ARITHMETIC_SHELL_3
 
+#include <nodes.h>
+
 #pragma warning(disable:6384)
 #pragma warning(disable:6011)// nullptr check
 #pragma warning(disable:4005)// redefine of macro
@@ -74,6 +76,6 @@ void TnodesReleaseTofreeCotlab(void* inp);
 void InodePrint(inode*** inp);
 
 // keep input `nest` zero.
-void NnodePrint(const Nesnode* nnod, unsigned nest);
+void NnodePrint(const nnode* nnod, unsigned nest);
 
 #endif

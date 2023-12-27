@@ -1,7 +1,7 @@
 // ASCII GPL3 COTLAB Copyright (C) 2023 Dosconio
 
 #include <stdio.h>
-#include <cdear.h>
+#include <coear.h>
 #include <numar.h>
 #include <inttypes.h>
 #include "cotlab.h"
@@ -42,34 +42,34 @@ void InodePrint(inode*** inp)
 		else
 			printf("%s <%s%s> %s\n", crt->addr, crt->property ? "const " : "",
 				tokentype_iden[crt->type], (char*)crt->data);
-		crt = crt->right;
+		crt = crt->next;
 	}
 }
 
-void NnodePrint(const Nesnode* nnod, unsigned nest)
+void NnodePrint(const nnode* nnod, unsigned nest)
 {
-	const Nesnode* crt = nnod;
+	const nnode* crt = nnod;
 	while (crt)
 	{
 		for (unsigned i = 0; i < nest; i++) putchar('\t');
-		if (crt->class == dt_float)
-			printf("Nnode [%s] %lf\n", tokentype_iden[crt->class], CoeToDouble((void*)crt->addr));
-		else if (crt->class == dt_num)
+		if (crt->type == dt_float)
+			printf("Nnode [%s] %lf\n", tokentype_iden[crt->type], CoeToDouble((void*)crt->addr));
+		else if (crt->type == dt_num)
 		{
-			printf("Nnode [%s] [%lf %lfj]\n", tokentype_iden[crt->class], CoeToDouble(&((numa*)crt->addr)->Real), CoeToDouble(&((numa*)crt->addr)->Imag));
+			printf("Nnode [%s] [%lf %lfj]\n", tokentype_iden[crt->type], CoeToDouble(&((numa*)crt->addr)->Real), CoeToDouble(&((numa*)crt->addr)->Imag));
 		}
 		else
-			printf("Nnode [%s] %s\n", tokentype_iden[crt->class], crt->addr);
+			printf("Nnode [%s] %s\n", tokentype_iden[crt->type], crt->addr);
 		if (crt->subf) NnodePrint(crt->subf, nest + 1);
-		crt = crt->right;
+		crt = crt->next;
 	}
 }
 
 void CotPrint(tnode* inp)// Linear
 {
-	int single = inp->right && !inp->right->right;
+	int single = inp->next && !inp->next->next;
 	CoeInit();
-	for (tnode* crt = inp->right; crt; crt = crt->next)
+	for (tnode* crt = inp->next; crt; crt = crt->next)
 	{
 		if (!crt->addr) continue;
 		if(!single) printf("Line %" PRIiPTR ": ", crt->row + 1);
@@ -121,7 +121,7 @@ int CotApplyObject(nnode* inp, nnode* parent)
 {
 	//{TEMP} just snesitive inod-chain
 	nnode* crt = inp;
-	if (crt->class != tok_iden || !crt->addr) return 0;
+	if (crt->type != tok_identy || !crt->addr) return 0;
 	if (!(parent && !StrCompare(parent->addr, "ASSIGN") && parent->subf == crt))
 	{
 		inode* des = InodeLocate(inods[1], crt->addr, 0);
@@ -137,7 +137,7 @@ int CotApplyObject(nnode* inp, nnode* parent)
 				srs(crt->addr, NumCpy(des->data));
 			}
 			else srs(crt->addr, StrHeap(des->data));
-			crt->class = des->type;
+			crt->type = des->type;
 		}
 		else
 		{
@@ -160,21 +160,21 @@ int CotExecuate(nnode* inp, nnode* parent)// use parent to replace return nnode*
 	nnode* next = 0;
 	for (nnode* crt = inp; crt; crt = next)
 	{
-		next = crt->right;
+		next = crt->next;
 		if (!CotExecuate(crt->subf, crt))
 			if (parent)	return 0;
 			else goto errp;
-		if (crt->class == tok_iden)// No else case with the below
+		if (crt->type == tok_identy)// No else case with the below
 			if(state = CotApplyObject(crt, parent))
 			{
 				if (state == 2)
 					if (parent)	return 0;
 					else goto errp;
-				next = crt->right;
+				next = crt->next;
 				NnodeRelease(crt, parent, 0);
 				continue;
 			}
-		if (crt->class == tok_any)continue;
+		if (crt->type == tok_any)continue;
 		if (!crt->subf && !crt->bind)
 		{
 			dnode* crttmp = NnodeToDnode(MemHeap(crt, sizeof *crt));
@@ -183,8 +183,8 @@ int CotExecuate(nnode* inp, nnode* parent)// use parent to replace return nnode*
 			continue;
 		}
 		// f(h(1,2)); pi(); (1);
-		Dnode* f_in = NnodeToDnode(crt->subf);// one of alias of crt->subf
-		Dnode* res = 0;
+		dnode* f_in = NnodeToDnode(crt->subf);// one of alias of crt->subf
+		dnode* res = 0;
 		if (crt->bind)
 		{
 			res = ((fstruc_t)crt->bind)(f_in);
@@ -195,11 +195,11 @@ int CotExecuate(nnode* inp, nnode* parent)// use parent to replace return nnode*
 		if (res)
 		{
 			//{TEMP} just for 1 return.
-			crt->class = res->type;
+			crt->type = res->type;
 			crt->subf = 0;
 			if (crt->addr) memf(crt->addr);
 			crt->addr = res->addr;
-			DnodeRelease(res, 0);//{TODO} now just for single return function
+			_dnode_freefunc = nil, DnodeRemove(res);
 		}
 		else
 		{

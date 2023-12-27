@@ -2,7 +2,7 @@
 // ! inf/nan will influence CoeInt()
 #include <stdio.h>
 #include "cotlab.h"
-#include <cdear.h>
+#include <coear.h>
 #include <numar.h>
 #include "parser.h"
 
@@ -123,8 +123,8 @@ dnode* Dtr_int(dnode* const callinfo)
 dnode* DtrASSIGN(dnode* const callinfo)
 {
 	const dnode* callright = 0;
-	if (!callinfo || callinfo->type != tok_iden || !callinfo->addr ||
-		!(callright = callinfo->right)) return 0;
+	if (!callinfo || callinfo->type != tok_identy || !callinfo->addr ||
+		!(callright = callinfo->next)) return 0;
 	coe* co = 0;
 	inode* crt = 0;
 	dnode* ret = 0;
@@ -148,7 +148,7 @@ dnode* DtrASSIGN(dnode* const callinfo)
 		ret = zalcof(dnode);
 		ret->addr = (void*)NumCpy((void*)callright->addr);
 	}
-	else if (callright->type == tok_iden)
+	else if (callright->type == tok_identy)
 	{
 		erro("Something wrong yo non-function identifier linkage.");
 	}
@@ -214,7 +214,7 @@ dnode* DtrPRENEGA(dnode* const callinfo)
 	else if (callinfo->type == dt_int)
 	{
 		ret->addr = StrHeap(callinfo->addr);
-		ret->addr[0] = (ret->addr[0] == '+') ? '-' : '+';
+		((char*)ret->addr)[0] = (((char*)ret->addr)[0] == '+') ? '-' : '+';
 	}
 	else erro("Bad type of negative operator.");
 	ret->type = callinfo->type;
@@ -223,7 +223,7 @@ dnode* DtrPRENEGA(dnode* const callinfo)
 
 dnode* DtrARIADD(dnode* const callinfo)
 {
-	dnode* cright = callinfo->right;
+	dnode* cright = callinfo->next;
 	dnode* ret = zalcof(dnode);
 	if (callinfo->type == dt_str && cright->type == dt_str)
 	{
@@ -258,7 +258,7 @@ dnode* DtrARIADD(dnode* const callinfo)
 
 dnode* DtrARISUB(dnode* const callinfo)
 {
-	dnode* cright = callinfo->right;
+	dnode* cright = callinfo->next;
 	dnode* ret = zalcof(dnode);
 	ArithImplicitCoversion(callinfo, cright);
 	if (callinfo->type == dt_int && cright->type == dt_int)
@@ -287,13 +287,13 @@ dnode* DtrARISUB(dnode* const callinfo)
 
 dnode* DtrARIMUL(dnode* const callinfo)
 {
-	dnode* cright = callinfo->right;
+	dnode* cright = callinfo->next;
 	dnode* ret = zalcof(dnode);
 	ArithImplicitCoversion(callinfo, cright);
 	if (callinfo->type == dt_str && cright->type == dt_int)
 	{
 		ret->addr = StrHeap("");
-		while (cright->addr[1] != '0')
+		while (((char*)cright->addr)[1] != '0')
 		{
 			srs(ret->addr, StrHeapAppend(ret->addr, callinfo->addr));
 			srs(cright->addr, ChrSub(cright->addr, "+1"));
@@ -327,7 +327,7 @@ dnode* DtrARIMUL(dnode* const callinfo)
 
 dnode* DtrARIDIV(dnode* const callinfo)
 {
-	dnode* cright = callinfo->right;
+	dnode* cright = callinfo->next;
 	dnode* ret = zalcof(dnode);
 	if (!isaritype(callinfo->type) || !isaritype(cright->type))
 	{
@@ -357,7 +357,7 @@ dnode* DtrARIREM(dnode* const callinfo)// [OUT INT]
 {
 	// (int, int)
 	// There is implicit type conversion
-	dnode* cright = callinfo->right;
+	dnode* cright = callinfo->next;
 	if (callinfo->type != dt_float && callinfo->type != dt_int) erro("Bad dest op of rem.");
 	if (callinfo->next->type != dt_float && callinfo->next->type != dt_int) erro("Bad sors op of rem.");
 	coe* des = callinfo->type == dt_float ? CoeCpy((void*)callinfo->addr) :
@@ -381,7 +381,7 @@ dnode* DtrARIREM(dnode* const callinfo)// [OUT INT]
 
 dnode* DtrARIPOW(dnode* const callinfo)// [OUT CDE]
 {
-	dnode* cright = callinfo->right;
+	dnode* cright = callinfo->next;
 	dnode* ret = zalcof(dnode);
 	if (!isaritype(callinfo->type) || !isaritype(cright->type))
 	{
@@ -389,7 +389,7 @@ dnode* DtrARIPOW(dnode* const callinfo)// [OUT CDE]
 		erro((char*)__FUNCIDEN__);
 		return 0;
 	}
-	if (callinfo->type == dt_num || cright->type == dt_num || (callinfo->type == dt_float && ((coe*)callinfo->addr)->coff[0] == '-') || (callinfo->type == dt_int && callinfo->addr[0] == '-'))
+	if (callinfo->type == dt_num || cright->type == dt_num || (callinfo->type == dt_float && ((coe*)callinfo->addr)->coff[0] == '-') || (callinfo->type == dt_int && ((char*)callinfo->addr)[0] == '-'))
 	{
 		ArithExplicitCoversionRise(callinfo, dt_num);
 		ArithExplicitCoversionRise(cright, dt_num);

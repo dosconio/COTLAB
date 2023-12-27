@@ -6,18 +6,18 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <ustring.h>
-#include <cdear.h>
+#include <coear.h>
 #include <numar.h>
 #include <consio.h>
 #include "parser.h"
 
-Dnode* SGAWarnChain;//{TODO} warnings chain
+dnode* SGAWarnChain;//{TODO} warnings chain
 size_t SGANumofWarn = 0;
 
 char* SGAErroMsg = 0;
 jmp_buf errjb = { 0 };
 
-Dnode* ToFreeList;//{TODO}
+dnode* ToFreeList;//{TODO}
 char* COT_CRTFILE;
 
 void warn(char* str)
@@ -73,7 +73,7 @@ inline static void CotResourceRemove(void* obj, size_t typ)
 void NnodeReleaseTofreeCotlab(void* n)
 {
 	nnode* nod = n;
-	CotResourceRemove(nod->addr, nod->class);
+	CotResourceRemove(nod->addr, nod->type);
 	memf(n);
 }
 

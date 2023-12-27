@@ -1,7 +1,7 @@
 # COTLAB
 
 - full-name: Command and Tensor Laboratory
-- type: Script Language Interpreter and Terminal Shell
+- type: Script Interpreter; Terminal Shell with extensions; builder (maker); Visual Magicoll;
 - domain: cotlab.org
 - alias: SGA-Generation 3rd (Rewrite from zero)
 - license: GPL-3.0 license
@@ -11,25 +11,7 @@
 
 > Please give me a :star: if you are interested.
 
-### Command-line
-
-`-s`: terminal shell mode
-
-`-f`: interpret a script
-
-`-c`: execute an instant command
-
-### Cautious
-
-- Use indent correctly, for example, spaces before a line is invalid except the console shell mode.
-
-### Commit
-
-- keep the project build-able and run-able
-
-
-
-### Participate
+### Society
 
 If you want to participate in developing COTLAB, contact us, or your work may be duplicated with other authors. When committing yours, append your information in `UPDATE.md`(detailed date-time needed) and `AUTHOR.md`.
 
@@ -37,6 +19,6 @@ If you would like to build your own branch and won't merge it back, your can for
 
 Thanks for yours.
 
-### Depend
+### Dependence
 
-- ArinaMgk (Phina Ren) - **UNISYM**(Apache 2 )
+- ArinaMgk (Phina Ren) - **UNISYM**(Apache 2)

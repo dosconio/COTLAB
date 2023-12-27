@@ -39,6 +39,6 @@ typedef dnode* (*fstruc_t)(dnode* const);
 int NnodeSymbolsDivide(nnode* inp, size_t width, size_t idx, nnode* parent);
 
 //
-nnode* StrTokenParse(Tode* inp);
+nnode* StrTokenParse(tode* inp);
 
 #endif

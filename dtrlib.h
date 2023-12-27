@@ -61,5 +61,3 @@ dnode* DtrACosh(dnode* const callinfo);
 dnode* DtrATanh(dnode* const callinfo);
 
 // // // // // // // //
-
-dnode* DtrCalendar(dnode* const callinfo);
