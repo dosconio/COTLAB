@@ -3,6 +3,7 @@
 // under certain conditions; type `$ cot help' for details.
 
 #define _CRT_SECURE_NO_WARNINGS
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <inttypes.h>
@@ -12,20 +13,22 @@
 #include "cotlab.h"
 #include "parser.h"
 #include "executor.h"
+#include <error.h>
+
 ulibsym(0x1000)
+
 char ulibver[16] = { "Not detected." };// from 'unisym/datura/version'
 
 #define COT_SHELL_MODE_FAST 1
+
+char* COT_CRTFILE;// Current file name
 
 //
 typedef char arnbuf[0x1000];
 arnbuf arna_tempor,// parse pool
 	arna_tmpslv,// command pool
 	arna_tmpext;// work-ing folder pool
-//
-extern char* SGAErroMsg;
-extern jmp_buf errjb;
-extern int COT_EXE_AUTOLF;
+
 FILE* fp;
 char* ptr;
 size_t tasks = 0;

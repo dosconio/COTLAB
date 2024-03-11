@@ -188,7 +188,10 @@ int CotExecuate(nnode* inp, nnode* parent)// use parent to replace return nnode*
 		if (crt->bind)
 		{
 			res = ((fstruc_t)crt->bind)(f_in);
-			DnodesReleaseCotlab(f_in);
+			///[OLD] DnodesReleaseCotlab(f_in);
+			_dnode_freefunc = (void(*)(void*))DnodesReleaseCotlab,
+				_dnode_freepass = 1;
+			DnodeRelease(f_in);
 		}
 		else res = f_in;
 		if (!parent) CotUpdateLast(res);

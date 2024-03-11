@@ -1,40 +1,22 @@
-// ASCII
+// ASCII GPL3 COTLAB Copyright (C) 2023 Dosconio
+// Error and destruction handling
 #pragma warning(disable:4005)// redefine of macro
 #pragma warning(disable:6011)
 #define _LIB_STRING_HEAP
-#include <setjmp.h>
+
+#include <error.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <ustring.h>
+#include <consio.h>
+
 #include <coear.h>
 #include <numar.h>
-#include <consio.h>
 #include "parser.h"
 
-dnode* SGAWarnChain;//{TODO} warnings chain
-size_t SGANumofWarn = 0;
+extern char* COT_CRTFILE;// Current file name
 
-char* SGAErroMsg = 0;
-jmp_buf errjb = { 0 };
-
-dnode* ToFreeList;//{TODO}
-char* COT_CRTFILE;
-
-void warn(char* str)
-{
-	SGANumofWarn++;
-	printf("Warn %s\n", str);
-	///if (!SGAFirstWarn) SGAFirstWarn = str;
-}
-void erro(char* str)
-{
-	SGAErroMsg = str;
-	printf("Erro: %s \n", str);//{TEMP OCCUPY}
-	return;//{TEMP OCCUPY}
-	if (errjb)
-		longjmp(errjb, 1);
-}
-
+// Cotlab Abort
 void cabort(const char* str, size_t row, size_t col, char* txt)
 {
 	row++;
@@ -53,6 +35,7 @@ void cabort(const char* str, size_t row, size_t col, char* txt)
 	if (errjb) longjmp(errjb, 1);
 }
 
+// Destructure object according to type
 inline static void CotResourceRemove(void* obj, size_t typ)
 {
 	if (!obj) return;
@@ -94,14 +77,10 @@ void InodeReleaseTofreeCotlab(void* n)
 	memf(nod);
 }
 
-// !!! call by just COTLAB but passed for unisym, so this operate multi-items
 void DnodesReleaseCotlab(dnode* inp)
 {
-	dnode* first = inp;
-	if (!inp) return;
-	if (inp->next) DnodesReleaseCotlab(inp->next);
-	CotResourceRemove(first->addr, first->type);
-	memfree(first);
+	CotResourceRemove(inp->addr, inp->type);
+	memf(inp);
 }
 
 void TnodesReleaseTofreeCotlab(void* inp)
