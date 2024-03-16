@@ -16,17 +16,7 @@
 extern inode** inods;
 extern size_t LIB_CDE_PRECISE_SHOW;
 
-static const char* tokentype_iden[] =
-{
-	"none", "any", "comment", "directive",
-	"symbol", "space", "unknown", "identifier",
-	"string", "number", "","",
-	"","","","",
-	"func",
-	"int","~float~",
-	"complex","posi",
-	"~str~","astr","u8str",
-};
+
 
 enum datatype// for Nesnode.iden, all entity
 {

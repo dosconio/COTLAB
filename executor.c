@@ -46,24 +46,7 @@ void InodePrint(inode*** inp)
 	}
 }
 
-void NnodePrint(const nnode* nnod, unsigned nest)
-{
-	const nnode* crt = nnod;
-	while (crt)
-	{
-		for (unsigned i = 0; i < nest; i++) putchar('\t');
-		if (crt->type == dt_float)
-			printf("Nnode [%s] %lf\n", tokentype_iden[crt->type], CoeToDouble((void*)crt->addr));
-		else if (crt->type == dt_num)
-		{
-			printf("Nnode [%s] [%lf %lfj]\n", tokentype_iden[crt->type], CoeToDouble(&((numa*)crt->addr)->Real), CoeToDouble(&((numa*)crt->addr)->Imag));
-		}
-		else
-			printf("Nnode [%s] %s\n", tokentype_iden[crt->type], crt->addr);
-		if (crt->subf) NnodePrint(crt->subf, nest + 1);
-		crt = crt->next;
-	}
-}
+
 
 void CotPrint(tnode* inp)// Linear
 {

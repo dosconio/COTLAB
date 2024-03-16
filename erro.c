@@ -35,30 +35,7 @@ void cabort(const char* str, size_t row, size_t col, char* txt)
 	if (errjb) longjmp(errjb, 1);
 }
 
-// Destructure object according to type
-inline static void CotResourceRemove(void* obj, size_t typ)
-{
-	if (!obj) return;
-	switch (typ)
-	{
-	case tok_number:
-		CoeDel(obj);
-		break;
-	case dt_num:
-		NumDel(obj);
-		break;
-	default:
-		memf(obj);
-		break;
-	}
-}
 
-void NnodeReleaseTofreeCotlab(void* n)
-{
-	nnode* nod = n;
-	CotResourceRemove(nod->addr, nod->type);
-	memf(n);
-}
 
 void InodeReleaseTofreeElementCotlab(void* n)
 {

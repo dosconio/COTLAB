@@ -13,100 +13,13 @@
 static size_t cabort_col, cabort_row;
 static char* cabort_txt;
 
-// ---- ---- ---- ---- Operator List ---- ---- ---- ----
-// Enable parial of {Pref; LR0; LR1; LR2; RL}
-const char
-* OperatorSuff[] = { "!","ARIFACT","++","SUFADD","--","SUFSUB",".","SUFMEMB","->","SUFMEMB",
-	"[\1]","ARRSSC","{\1}", "OBRACE" },// <0> "a[b]c => ARRSSC(a,b)c"
-* OperatorPref[] = { "++","PREADD","--","PRESUB","+","PREPOSI","-","PRENEGA",
-	"!","LOGNOT","~","BITNOT","*","PREMEMB","&","PREADDR", "\0sizeof", "SIZEOF" },// <1>
-* OperatorLR0[] = { "^", "ARIPOW" },// <1.5>
-* OperatorLR1[] = { "*","ARIMUL","/","ARIDIV","%","ARIREM" },// <2>
-* OperatorLR2[] = { "+","ARIADD","-","ARISUB" },// <3>
-* OperatorLR3[] = { "<<","BITSHL",">>","BITSHR" },// <4>
-* OperatorLR4[] = { "<","JBELOW","<=","JBEEQU",">","JGREAT",">=","JGREQU" },// <5>
-* OperatorLR5[] = { "==","JEQUAL","!=","JNOTEQ" },// <6>
-* OperatorLR6[] = { "&","BITAND" },// <7>
-* OperatorLR7[] = { "^","BITXOR" },// <8>
-* OperatorLR8[] = { "|","BITWOR" },// <9>
-* OperatorLR9[] = { "&&","LOGAND" },// <10>
-* OperatorLRA[] = { "||","LOGIOR" },// <11>
-* OperatorRLL[] = { "\2?\2:\2","TERNAR" },// <12> TERNAR(,,)
-* OperatorRL[] = { "=","ASSIGN","+=","AGNSUM","-=","AGNDIF",
-	"*=","AGNPRO","/=","AGNQUO","%=","AGNREM",
-	"<<+","AGNSHL",">>=","AGNSHR","&=","AGNAND","^=","AGNXOR","|=","ASGNOR" },// <13>
-	* OPTOREX1[] = { "\2if\2:\2","BLKJDG" }// <14>
-	// COMMA
-;
-const char** OperatorsList[] =
-{
-	OperatorSuff, OperatorPref,
-	OperatorLR1,OperatorLR2,OperatorLR3,OperatorLR4,OperatorLR5,OperatorLR6,OperatorLR7,OperatorLR8,OperatorLR9,OperatorLRA,
-	OperatorRLL,OperatorRL,
-	OPTOREX1
-};//{TODO} Fina suggests: add suffix-factorial, format `int!'
-unsigned char OperatorsOrder[] = { 0,1, 0,0,0,0,0,0,0,0,0,0, 1,1,1 };// 0 Left-Right
 
-#define _OPERATOR_GROUP_LEVEL_MAX 4// <GOAL> 14
 
 // ---- ---- File design: from the bottom to top 
 
-#define isidnsym(type)(type<tok_others)
-#define isentity(type)(type>tok_others)
 
-int NnodeSymbolsDivide(nnode* inp, size_t width, size_t idx, nnode* parent)
-{
-	// RFV14
-	size_t slen = StrLength(inp->addr);
-	// i+++j, +++, "+" idx(2)width(1)slen(3)
-	if (slen == 0 || idx + width > slen) erro("SYSTEM ERROR: yo NODEX->NnodeSymbolsDivide");
-	// 0case .
-	if (slen == width) return 0;// assert (idx zo 0)
-	// 1case .@@
-	// "a" "+++" "b", "a" "++"-'+'-"b"
-	if (idx == 0)
-	{
-		nnode* newd = zalc(sizeof(nnode));
-		newd->type = tok_symbol;
-		newd->row = inp->row;
-		newd->col = inp->col + width;
-		newd->addr = StrHeap(inp->addr + width);
-		inp->addr[width] = 0;
-		newd->next = inp->next;
-		newd->left = inp;
-		if (inp->next) inp->next->left = newd;
-		inp->next = newd;
-		return 1;
-	}
-	// 2case @@.
-	// "a" "+++" "b", "a"-'++'-"+" "b"
-	if (idx + width == slen)
-	{
-		nnode* newd = NnodeInsert(inp, 0, parent);
-		newd->type = tok_symbol;
-		inp->col += slen - width;
-		char* tmpaddr = StrHeap(inp->addr + idx);
-		newd->addr = inp->addr;
-		newd->addr[slen - width] = 0;
-		inp->addr = tmpaddr;
-		return 2;
-	}
-	// 3else @.@
-	// "a" "+++*" "b", "a"-'++'-"+"-'*'-"b"
-	nnode* newleft = NnodeInsert(inp, 0, parent);
-	nnode* newright = NnodeInsert(inp, 1, parent);
-	newleft->type = newright->type = tok_symbol;
-	newleft->col = inp->col;
-	inp->col += idx;
-	newright->col = inp->col + width;
-	char* tmpaddr_mid = StrHeapN(inp->addr + idx, width);
-	newright->addr = StrHeap(inp->addr + idx + width);// idx zo lenof left
-	newleft->addr = inp->addr;
-	newleft->addr[idx] = 0;
-	inp->addr = tmpaddr_mid;
 
-	return 3;
-}
+
 
 // Return 1 for success, 0 for need to be released.
 static int StrTokenNestLinkage(nnode* inp)
@@ -445,57 +358,14 @@ enderro:
 
 nnode* StrTokenParse(tode* inp)
 {
-	// origin from Haruno yo RFT27, principle of "Every action is a function, every object is in memory."
-	// RFB19, RFV13 Rewrite
-	if (!inp) return 0;
+	
 	inp->row = inp->next ? inp->next->row + 1 : 0;
-	int state = 0;
 	tode* crt = inp;// The first is a occupy in tok_any
 	nnode* nestok = 0, * crtnes = 0;
-	//
-	// Solve comment, Trim trailing or middle spaces;
-	//
-	crt = inp;
-	tnode* next = 0;
-	while (crt)
-	{
-		next = crt->next;
-		if (crt->type == tok_comment ||
-			crt->type == tok_spaces &&
-			crt->row == crt->left->row &&
-			(!crt->next || crt->row == crt->next->row))
-			StrTokenThrow(crt);
-		crt = next;
-	}
-	//
-	// String cat (must on a line);
-	//
-	crt = inp;
-	while (crt)
-	{
-		next = crt->next;
-		while ((crt->type == tok_string) && (crt->next) && (crt->next->type == tok_string))
-		{
-			next = crt->next->next;
-			srs(crt->addr, StrHeapAppend(crt->addr, crt->next->addr));
-			StrTokenThrow(crt->next);
-		}
-		crt = next;
-	}
-	//
-	// Discard any directive temporarily;
-	//
-	crt = inp;
-	while (crt)
-	{
-		next = crt->next;
-		if (crt->type == tok_direct)
-			StrTokenThrow(crt);
-		crt = next;
-	}
-	//
+
+
+
 	// Make the imm-value live
-	//
 	CoeInit();
 	for (crt = inp; crt; crt = crt->next)
 	{
@@ -522,24 +392,14 @@ nnode* StrTokenParse(tode* inp)
 			}
 		}
 	}
-	// ---- ---- ---- ---- LN ---> NS ---- ---- ---- ----
-	// Restructure for nested
-	//
-	crt = inp; crtnes = nestok = zalc(sizeof(nnode));
-	{
-		TnodeToNnode(crtnes, crt);
-		tnode* p = crt->next;
-		memf(crt);
-		crt = p;
-	}
-	while(crt)
-	{
-		crtnes = NnodeInsert(crtnes, 1, 0);
-		TnodeToNnode(crtnes, crt);
-		tnode* p = crt;
-		crt = crt->next;
-		memf(p);
-	}
+	///
+
+	///
+
+	///
+
+
+
 	// Convert all operators into function calling form;
 	state = StrTokenNestParse(nestok, 0);
 	if (!state) return 0;// {TODO} erro
@@ -555,10 +415,7 @@ nnode* StrTokenParse(tode* inp)
 		}
 		crtnes = crtnes->next;
 	}
-	// Echo for debug;
-#ifdef _dbg_echo
-	NnodePrint(nestok->next, 0);
-#endif
+
 	// linkage;
 	// StrTokenNestVariable(nestok, 0); while executing
 	state = StrTokenNestLinkage(nestok);

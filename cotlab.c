@@ -7,17 +7,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <inttypes.h>
-#include <setjmp.h>
 #include <coear.h>
 #include <consio.h>
 #include "cotlab.h"
 #include "parser.h"
 #include "executor.h"
 #include <error.h>
-
-ulibsym(0x1000)
-
-char ulibver[16] = { "Not detected." };// from 'unisym/datura/version'
 
 #define COT_SHELL_MODE_FAST 1
 
@@ -29,29 +24,13 @@ arnbuf arna_tempor,// parse pool
 	arna_tmpslv,// command pool
 	arna_tmpext;// work-ing folder pool
 
-FILE* fp;
-char* ptr;
-size_t tasks = 0;
 inode** inods = 0;
 int state;
-int fgetnext(void) { return fgetc(fp); }
-void fseekback(ptrdiff_t l) { fseek(fp, (long)l, SEEK_CUR); }
-int sgetnext(void) { return (*ptr) ? *ptr++ : EOF; }
-void sseekback(ptrdiff_t l) { ptr += l; }
-//
-
 
 // Return zero for success for init_total_errmech. src[0:file, 1:textbuf]
-int cottask(int src, void* point)// {TODO} receive varlist inode[3]*
+int cottask(int src, void* point)
 {
-	extern char* COT_CRTFILE;
-	COT_CRTFILE = src ? 0 : point;
-	tasks++;
-	jmp_buf errjb_stack;
-	MemCopyN(&errjb_stack, &errjb, sizeof errjb);
-	init_total_errmech(0);
-	void* stack_last_pointer_file = fp;
-	void* stack_last_pointer_str = ptr;
+
 	tnode* ori;
 	nnode* res;
 
@@ -61,23 +40,13 @@ int cottask(int src, void* point)// {TODO} receive varlist inode[3]*
 		printf("File %s is misty.", (char*)point);
 		goto endo;
 	}
-	ori = StrTokenAll(!src ? fgetnext : sgetnext,
-		!src ? fseekback : sseekback, arna_tempor);
-	if (ori->next && !ori->next->next)// single iden ---> func
-	{
-		if (ori->next->type == tok_identy && !InodeLocate(inods[1], ori->next->addr, 0))
-			StrTokenAppend(ori->next, "()", 2, tok_symbol, 0, ori->next->col + 2);
-	}// {FUTURE}[convert `iden entity0 ... entityN` to iden(...)] sin 1 ---> sin(1)
-	res = StrTokenParse(ori);// {TODO} param:inodes [data:0] for del item
-	state = CotExecuate(res, 0);
-	(void)state;
+	
 	ori = NnodeToTnode(res);
 	CotPrint(ori);
 	TnodesReleases(ori, TnodesReleaseTofreeCotlab);
 endo:
 	if (!src && fp) fclose(fp);
-	ptr = stack_last_pointer_str;
-	fp = stack_last_pointer_file;
+
 	MemCopyN(&errjb, &errjb_stack, sizeof errjb);
 	tasks--;
 	return 0;
@@ -85,64 +54,15 @@ endo:
 
 int main(int argc, char** argv)
 {
-	int option = 0;//1[shell] 2[command] 3[script]
-	int mode = 0;
-	inode* pre_macros = 0;// > nsens_objs
-	inode* sensi_objs = 0;// > isens_objs
-	inode* isens_objs = 0;// inode::property as [...|MUTABLE]
-	init_total_errmech(1);
-	CoeInit();
-	ConStyleNormal();
+
+	
 	// ---- ---- pre-set constants ---- ---- 
 	sensi_objs = InodeUpdate(0, "last", 0, 0, tok_EOF, InodeReleaseTofreeElementCotlab);// LOCK
 	InodeUpdate(sensi_objs, "pi", (void*)CoePi(), tok_number, 1, InodeReleaseTofreeElementCotlab);
 	InodeUpdate(sensi_objs, "e", (void*)CoeE(), tok_number, 1, InodeReleaseTofreeElementCotlab);
 
-	fp = fopen("../unisym/lib/Script/datura/version", "r");
-	if (fp)
-	{
-		for (size_t i = 0; i < sizeof(ulibver) - 1; i++)
-		{
-			int c = fgetc(fp);
-			if (c == EOF)
-			{
-				ulibver[i] = 0;
-				break;
-			}
-			ulibver[i] = c;
-		}
-		fclose(fp);
-	}
-	
 	inods = (inode * []){ pre_macros, sensi_objs, isens_objs };
 	// ---- ---- main ---- ---- 
-	ptr = argc < 3 ? 0 : argv[2];
-
-	if (argc <= 1 || !StrCompare(argv[1], "-s")) 
-	{
-		option = 1;
-		printf(CotTitle);
-	}
-	else if (argc >= 3 && !StrCompare(argv[1], "-f")) option = 3;
-	else if (argc >= 3 && !StrCompare(argv[1], "-c")) option = 2;
-	else if (argc > 1)
-	{
-		FILE* tmpf = fopen(argv[1], "r");
-		ptr = argv[1];
-		if (tmpf)
-		{
-			option = 4;// After run, keep shell.
-			fclose(tmpf);
-		}
-		else option = 2;
-	}
-	else
-	{
-		puts("Bad command.");
-		return -1;
-	}
-
-	// else puts("Unknown command.");
 apply_opt:
 	switch (option)
 	{
@@ -237,6 +157,6 @@ apply_opt:
 	}
 	InodesRelease(sensi_objs, InodeReleaseTofreeCotlab);
 	//{TODO} InodesRelease(isens_objs, InodeReleaseTofreeCotlab);
-	if(malc_count) printf("System leak: %" PRIiPTR " times!\n", malc_count);
-	return 0;
+	
+	
 }
