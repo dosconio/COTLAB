@@ -3,15 +3,11 @@
 // ModuTitle: COTLAB Task
 // Copyright: Dosconio COTLAB, GNU-GPL Version 3
 
-#include <cinc>
-#include <alice.h>
-#include <aldbg.h>
-#include <cinc>
+#include "cothead.h"
 #include "contask.h"
 #include <stdio.h>
 #include <fstream>
-#include <new>
-#include <nnode>
+
 
 static char cotbuf[0x1000];
 static union {
@@ -20,12 +16,17 @@ static union {
 };//{TODO} out of class
 
 
+
 static int fgetnext(void) { return fgetc(fp); }
 static void fseekp(ptrdiff_t l) { fseek(fp, (long)l, SEEK_CUR); }
 static int sgetnext(void) { return (*sp) ? *sp++ : EOF; }
 static void sseekp(ptrdiff_t l) { sp += l; }
 
-void NnodeReleaseTofreeCotlab(void* n);
+stduint crtrow, crtcol;
+char* crtmsg;
+
+
+template<typename type0> void ReleaseTofreeCotlab(type0* n);
 
 Contask::Contask(const char* fname, consrc_t srctyp, uni::InodeChain** idens) {
 	//{TODO} receive varlist inode[3]*
@@ -47,10 +48,9 @@ Contask::Contask(const char* fname, consrc_t srctyp, uni::InodeChain** idens) {
 }
 
 Contask::~Contask() {
-	if (stage == STAGE_EXECUTED || stage == STAGE_PARSED)
+	if ((stage == STAGE_EXECUTED || stage == STAGE_PARSED) || !tpu)
 		npu->~NestedParseUnit();
 	else tpu->~TokenParseUnit();
-	mfree(tpu);
 	mfree(npu);
 }
 
@@ -61,14 +61,21 @@ void Contask::Prep() {
 }
 
 void Contask::Parse() {
-	sp = filename;
 	if (stage == STAGE_PREPED) {
 		npu = zalcof(uni::NestedParseUnit);
-		new (npu) uni::NestedParseUnit(*tpu->GetChain());
-		npu->GetNetwork()->Onfree(NnodeReleaseTofreeCotlab);
+		new (npu) uni::NestedParseUnit(*tpu->GetChain(), CotInitOperators());
+		mfree(tpu);
+		npu->GetNetwork()->Onfree((_tofree_ft)(ReleaseTofreeCotlab<uni::Nnode>));
 		npu->Parse();
 		if (!npu->parsed) {
 			stage = STAGE_FAILED;
+			crtcol = crtrow = 0; crtmsg = 0;
+			cabort(filename, "Parse failed");
+			return;
+		}
+		if (!Link()) {
+			stage = STAGE_FAILED;
+			cabort(filename, "Linkage failed");
 			return;
 		}
 		stage = STAGE_PARSED;
@@ -77,39 +84,30 @@ void Contask::Parse() {
 }
 
 void Contask::Execute() {
-	if (stage != STAGE_PARSED) return;
+	if (stage != STAGE_PARSED || !npu || !npu->GetNetwork()->Count()) return;
 	stage = STAGE_EXECUTED;
-	//...
+	uni::Nnode* n = npu->GetNetwork()->Root();
+	if (!CotExecuate(n, npu->GetNetwork(), n))
+		cabort(filename, "Execute failed");
 }
 
-//
+// ---- ---- ---- ----
 
-// Destructure object according to type
-inline static void CotResourceRemove(void* obj, size_t typ)
-{
-	if (!obj) return;
-	switch (typ)
-	{
-	/*case tok_number:
-		CoeDel(obj);
-		break;
-	case dt_num:
-		NumDel(obj);
-		break;*/
-	default:
-		memf(obj);
-		break;
+// Cotlab Abort : Cancel using farjump
+void cabort(const char* fname, const char* str) {
+	//{} ConStyleAbnormal();
+	if (!fname)
+		fprintf(stderr, "Error R%" PRIuPTR " C%" PRIuPTR, crtrow, crtcol);
+	else fprintf(stderr, "Error F\"%s\" [R%" PRIuPTR " C%" PRIuPTR "]", fname, crtrow, crtcol);
+	//{} ConStyleNormal();
+	fprintf(stderr, " %s", str);
+	crtcol = 0; crtrow = 0;
+	if (crtmsg) {
+		fprintf(stderr, " (%s)", crtmsg);
+		memf(crtmsg);
 	}
+	fprintf(stderr, "\n");
 }
-
-void NnodeReleaseTofreeCotlab(void* n)
-{
-	auto nod = (uni::Nnode*)n;
-	CotResourceRemove((void*)nod->offs, nod->type);
-	memf(n);
-}
-
-
 
 
 

@@ -27,31 +27,6 @@ arnbuf arna_tempor,// parse pool
 inode** inods = 0;
 int state;
 
-// Return zero for success for init_total_errmech. src[0:file, 1:textbuf]
-int cottask(int src, void* point)
-{
-
-	tnode* ori;
-	nnode* res;
-
-	if (src) ptr = point;
-	else if (!(fp = fopen(point, "r")))
-	{
-		printf("File %s is misty.", (char*)point);
-		goto endo;
-	}
-	
-	ori = NnodeToTnode(res);
-	CotPrint(ori);
-	TnodesReleases(ori, TnodesReleaseTofreeCotlab);
-endo:
-	if (!src && fp) fclose(fp);
-
-	MemCopyN(&errjb, &errjb_stack, sizeof errjb);
-	tasks--;
-	return 0;
-}
-
 int main(int argc, char** argv)
 {
 
@@ -61,7 +36,6 @@ int main(int argc, char** argv)
 	InodeUpdate(sensi_objs, "pi", (void*)CoePi(), tok_number, 1, InodeReleaseTofreeElementCotlab);
 	InodeUpdate(sensi_objs, "e", (void*)CoeE(), tok_number, 1, InodeReleaseTofreeElementCotlab);
 
-	inods = (inode * []){ pre_macros, sensi_objs, isens_objs };
 	// ---- ---- main ---- ---- 
 apply_opt:
 	switch (option)
@@ -94,18 +68,8 @@ apply_opt:
 			}
 			else break;
 			ConScanLine(arna_tmpslv, sizeof arna_tmpslv);
-			StrDeprefixSpaces(arna_tmpslv);
-			if (!StrCompare(arna_tmpslv, "exit")) break;
-			if (!StrCompare(arna_tmpslv, "help"))
-			{
-				puts("\nCOTLAB: Her SGA-3 (doscon.io), GNU GPL-3 (cotlab.org)\n"
-					"   ||"
-					"\n   |+ Doshou Haruno [Dscn.Org.Chief] (dosconyo@gmail.com)"
-					"\n   |+ Ren    Phina  [None.Org.Advis]"
-				);// A: Author
-				printf("   + UNISYM: %s", ulibver);
-				continue;
-			}
+			
+
 			if (!StrCompare(arna_tmpslv, "mode") && mode != COT_SHELL_MODE_FAST)
 			{
 				puts("FAST - MODE!");

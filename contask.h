@@ -22,10 +22,12 @@ private:
 	uni::InodeChain* list_macros;// > nsens_objs
 	uni::InodeChain* list_usenss;// > isens_objs
 	uni::InodeChain* list_isenss;// inode::property as [...|MUTABLE]
+	bool Link();
 public:
 	uni::TokenParseUnit* tpu;
 	uni::NestedParseUnit* npu;
 	uni::TnodeChain* returns;
+
 	Contask(const char* fname = "cotemp.bat", consrc_t srctyp = CONTASK_FILE, uni::InodeChain** idens = 0);
 	~Contask();
 	void Prep();
