@@ -18,7 +18,7 @@ enum datatype// for Nesnode.iden, all entity
 	dt_str = tok_string,// ustring
 	dt_float = tok_number,// CdeAr double
 	dt_int = tok__continue,// ChrAr ptrdiff_t
-	dt_num = dt_int,// NumAr _Complex
+	dt_cplx,// NumAr _Complex
 	dt_posi,// NumAr 4D-vector
 
 	dt_wstr,// wstring
@@ -45,6 +45,7 @@ template<typename type0> void ReleaseTofreeCotlab(type0* n)
 	CotResourceRemove((void*)n->offs, n->type);
 	memf(n);
 }
+void ReleaseTofreeCotlabInode(uni::Inode* n);
 
 // cotoken.cpp
 extern uni::NodeChain* CotInitOperators();
@@ -55,7 +56,23 @@ extern stduint crtrow, crtcol;
 extern char* crtmsg;
 void* CotCopy(void* inp, stduint typ);
 bool CotExecuate(uni::Nnode* inp, uni::NnodeChain* nc, uni::Nnode*& parencrt);
+void OpARIPOW(uni::DnodeChain* io);
+void OpARIMUL(uni::DnodeChain* io);
+void OpARIDIV(uni::DnodeChain* io);
 void OpARIADD(uni::DnodeChain* io);
+void OpARISUB(uni::DnodeChain* io);
+void FnSin(uni::DnodeChain* io);
+void FnCos(uni::DnodeChain* io);
+void FnTan(uni::DnodeChain* io);
+void FnASin(uni::DnodeChain* io);
+void FnACos(uni::DnodeChain* io);
+void FnATan(uni::DnodeChain* io);
+void FnSinh(uni::DnodeChain* io);
+void FnCosh(uni::DnodeChain* io);
+void FnTanh(uni::DnodeChain* io);
+void FnASinh(uni::DnodeChain* io);
+void FnACosh(uni::DnodeChain* io);
+void FnATanh(uni::DnodeChain* io);
 
 // contask.cpp
 extern void cabort(const char* fname, const char* str);

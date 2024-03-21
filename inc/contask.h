@@ -32,7 +32,7 @@ public:
 	~Contask();
 	void Prep();
 	void Parse();
-	void Execute();
+	bool Execute();
 	void All() {
 		if (stage == STAGE_RAW) Prep();
 		if (stage == STAGE_PREPED) Parse();

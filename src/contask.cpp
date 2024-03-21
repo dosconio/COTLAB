@@ -3,8 +3,8 @@
 // ModuTitle: COTLAB Task
 // Copyright: Dosconio COTLAB, GNU-GPL Version 3
 
-#include "cothead.h"
-#include "contask.h"
+#include "../inc/cothead.h"
+#include "../inc/contask.h"
 #include <stdio.h>
 #include <fstream>
 
@@ -83,12 +83,15 @@ void Contask::Parse() {
 	
 }
 
-void Contask::Execute() {
-	if (stage != STAGE_PARSED || !npu || !npu->GetNetwork()->Count()) return;
+bool Contask::Execute() {
+	if (stage == STAGE_FAILED ||stage != STAGE_PARSED || !npu || !npu->GetNetwork()->Count()) return false;
 	stage = STAGE_EXECUTED;
 	uni::Nnode* n = npu->GetNetwork()->Root();
-	if (!CotExecuate(n, npu->GetNetwork(), n))
+	if (!CotExecuate(n, npu->GetNetwork(), n)) {
 		cabort(filename, "Execute failed");
+		return false;
+	}
+	return true;
 }
 
 // ---- ---- ---- ----
