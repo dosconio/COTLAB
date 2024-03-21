@@ -22,7 +22,9 @@ const char* builtin_iden[] = { "sin", "cos", "tan", "asin","acos","atan","sinh",
 
 };// Catious strcat here
 
-void* builtin_link[] = { FnSin, FnCos, FnTan, FnASin,FnACos,FnATan,FnSinh, FnCosh, FnTanh, FnASinh,FnACosh,FnATanh,
+typedef void (*builtin_func_t)(uni::DnodeChain* io);
+
+builtin_func_t builtin_link[] = { FnSin, FnCos, FnTan, FnASin,FnACos,FnATan,FnSinh, FnCosh, FnTanh, FnASinh,FnACosh,FnATanh,
 	//Dtr_dbg_test, Dtr_system, Dtr_load, Dtr_int,DtrASSIGN,
 };
 
@@ -45,6 +47,7 @@ static void LinkNumber(uni::Nnode* inp, uni::NodeChain* togc) {
 		if (crt->type == tok_number) {
 			if (StrIndexChars(crt->addr, "ij"))
 			{
+				crt->type = tok_string;
 				//crt->type = dt_num;
 				//coe* tmpcoe = CoeFromLocale(crt->addr);
 				//srs(crt->addr, NumNewComplex("+0", "+0", "+1", tmpcoe->coff, tmpcoe->expo, tmpcoe->divr));
@@ -91,13 +94,13 @@ static bool StrTokenNestLinkage(uni::Nnode* inp, uni::NodeChain* togc)
 				uni::TokenOperator tmpop;
 				for0(i, tmpopg->count) {
 					if ((tmpop = tmpopg->operators[i]).ident && !StrCompare(tmpop.ident, crt->addr)) {
-						crt->bind = tmpop.bindfn;
+						crt->bind = (void*)tmpop.bindfn;
 						break;
 					}
 				}
 			} while (crtnod = crtnod->next); else;
 			else for0 (i, numsof(builtin_iden)) if (builtin_iden[i] && !StrCompare(builtin_iden[i], crt->addr)) {
-				crt->bind = builtin_link[i];
+				crt->bind = (void*)builtin_link[i];
 				break;
 			}
 			if (!crt->bind) {

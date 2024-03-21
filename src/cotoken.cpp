@@ -290,6 +290,9 @@ void Contask::PrintDebug() {
 
 void InodePrint(uni::InodeChain* ic) {
 	uni::Inode* crt = ic->Root();
-	if (crt) do	printtok((char*)crt->data, crt->type, crt->readonly); while (crt = crt->next);
+	if (crt) do {
+		printf("%s ", crt->addr);
+		printtok((char*)crt->data, crt->type, crt->readonly);
+	} while (crt = crt->next);
 }
 

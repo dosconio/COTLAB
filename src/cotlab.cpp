@@ -14,10 +14,12 @@
 #include <coear>
 #include <stdio.h>
 #include <iostream>//{TODO} -> conio
+extern "C" {
+stduint _MALCOUNT = 0;
+stduint _MALLIMIT = 0x1000;
+stduint call_state = 0x1000;
+}
 
-extern "C" stduint _MALCOUNT = 0;
-extern "C" stduint _MALLIMIT = 0x1000;
-extern "C" stduint call_state = 0x1000;
 
 #define CotTitle "COTLAB Console Build " __DATE__ "\n"
 
