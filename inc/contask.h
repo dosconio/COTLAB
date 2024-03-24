@@ -6,9 +6,7 @@
 #ifndef _INC_CONTASK
 #define _INC_CONTASK
 
-#include <tnode>
-#include <inode>
-#include <nnode>
+#include <cpp/nodes>
 
 enum consrc_t { CONTASK_FILE, CONTASK_BUF };
 

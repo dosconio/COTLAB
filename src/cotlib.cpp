@@ -3,11 +3,8 @@
 // ModuTitle: for linkage(built-in and outside) and execution
 // Copyright: Dosconio COTLAB, GNU-GPL Version 3
 
+#include <stdio.h>
 #include "../inc/cothead.h"
-#include "../inc/contask.h"
-#include "node"
-#include "stdio.h"
-#include <coear>
 
 static bool StrTokenNestLinkage(uni::Nnode* inp, uni::NodeChain* togc);
 
@@ -17,6 +14,7 @@ extern "C" void erro(char* msg) {
 	//...
 }
 
+//{} into Contask::
 const char* builtin_iden[] = { "sin", "cos", "tan", "asin","acos","atan","sinh", "cosh", "tanh", "asinh","acosh","atanh",
 	//"_dbg_test", "system", "load", "int", "ASSIGN",
 
@@ -82,8 +80,7 @@ bool Contask::Link() {
 }
 
 // Bind Coe, Linkage, with error handling
-static bool StrTokenNestLinkage(uni::Nnode* inp, uni::NodeChain* togc)
-{
+static bool StrTokenNestLinkage(uni::Nnode* inp, uni::NodeChain* togc) {
 	for (uni::Nnode* crt = inp; crt; crt = crt->next) {
 		if (crt->subf && !StrTokenNestLinkage(crt->subf, togc))
 			return false;
@@ -116,10 +113,22 @@ static bool StrTokenNestLinkage(uni::Nnode* inp, uni::NodeChain* togc)
 
 //
 
-bool CotExecuate(uni::Nnode* inp, uni::NnodeChain* nc, uni::Nnode*& parencrt) {
+bool CotExecuate(uni::Nnode* inp, uni::NnodeChain* nc, uni::Nnode*& parencrt, uni::InodeChain* list_sens) {
+	uni::Inode* inod;
 	for (uni::Nnode* crt = inp; crt; crt && (crt = crt->next)) {
-		if (crt->subf && !CotExecuate(crt->subf, nc, crt)) return false;
+		if (crt->subf && !CotExecuate(crt->subf, nc, crt, list_sens)) return false;
 		if (crt->type == tok_any) continue;
+		if (crt->type == tok_identy && !crt->bind && !crt->subf && crt->addr) {
+			if (list_sens && (inod = list_sens->Index(crt->addr))) {
+				CotResourceRemove((void*)crt->offs, crt->type);
+				crt->type = inod->type;
+				crt->offs = CotCopy((void*)inod->data, inod->type);
+			}
+			else for0 (i, numsof(builtin_iden)) {
+				if (builtin_iden[i] && !StrCompare(builtin_iden[i], crt->addr))
+					crt->bind = (void*)builtin_link[i];
+			}
+		}
 		if (crt->bind) {
 			uni::DnodeChain* f_io = zalcof(uni::DnodeChain);
 			new (f_io) uni::DnodeChain(true);
@@ -162,7 +171,10 @@ FuncOp2(ARISUB,-=)
 
 #define FuncBasic(iden) void Fn##iden(uni::DnodeChain* io) {\
 	Dnode* first = io->Root();\
-	if (!first || io->Count() != 1) return;\
+	if (!first || io->Count() != 1) {\
+		puts("Function " #iden " requires one argument.");\
+		return;\
+	}\
 	if (first->type == tok_number) {\
 		uni::Coe& coe_des = *(uni::Coe*)first->offs;\
 		coe_des.Srs(coe_des.iden());\

@@ -2,14 +2,16 @@
 #ifndef __COTHEAD
 #define __COTHEAD
 
-#include <cinc>
-#include <alice.h>
-#include <aldbg.h>
-#include <cinc>
+#include <cpp/cinc>
+#include <c/alice.h>
+#include <c/aldbg.h>
+#include <c/ustring.h>
+#include <c/consio.h>
+#include <cpp/cinc>
+#include <cpp/nodes>
+#include <cpp/coear>
 #include <new>
-#include <tnode>
-#include <inode>
-#include <nnode>
+#include "contask.h"
 
 extern const char* tab_tokentype[];
 
@@ -50,12 +52,13 @@ void ReleaseTofreeCotlabInode(uni::Inode* n);
 // cotoken.cpp
 extern uni::NodeChain* CotInitOperators();
 extern void InodePrint(uni::InodeChain* ic);
+void CotResourceRemove(void* obj, stduint typ);
 
 // cotlib.cpp
 extern stduint crtrow, crtcol;
 extern char* crtmsg;
 void* CotCopy(void* inp, stduint typ);
-bool CotExecuate(uni::Nnode* inp, uni::NnodeChain* nc, uni::Nnode*& parencrt);
+bool CotExecuate(uni::Nnode* inp, uni::NnodeChain* nc, uni::Nnode*& parencrt, uni::InodeChain* list_sens);
 void OpARIPOW(uni::DnodeChain* io);
 void OpARIMUL(uni::DnodeChain* io);
 void OpARIDIV(uni::DnodeChain* io);

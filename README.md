@@ -7,7 +7,7 @@
 - license: GPL-3.0 license
 - author: @`dosconio` in GitHub, dosconyo@gmail.com for email 
 - special: Everything can be a function. All expressions use immediate sequence points.
-- language name: **Datura**
+- language name: **Cotoba**
 
 > Please give me a :star: if you are interested.
 

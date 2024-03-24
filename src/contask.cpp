@@ -3,11 +3,9 @@
 // ModuTitle: COTLAB Task
 // Copyright: Dosconio COTLAB, GNU-GPL Version 3
 
-#include "../inc/cothead.h"
-#include "../inc/contask.h"
 #include <stdio.h>
 #include <fstream>
-
+#include "../inc/cothead.h"
 
 static char cotbuf[0x1000];
 static union {
@@ -87,7 +85,7 @@ bool Contask::Execute() {
 	if (stage == STAGE_FAILED ||stage != STAGE_PARSED || !npu || !npu->GetNetwork()->Count()) return false;
 	stage = STAGE_EXECUTED;
 	uni::Nnode* n = npu->GetNetwork()->Root();
-	if (!CotExecuate(n, npu->GetNetwork(), n)) {
+	if (!CotExecuate(n, npu->GetNetwork(), n, list_usenss)) {
 		cabort(filename, "Execute failed");
 		return false;
 	}

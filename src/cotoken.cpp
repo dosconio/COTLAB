@@ -5,8 +5,6 @@
 
 #include <stdio.h>
 #include "../inc/cothead.h"
-#include "../inc/contask.h"
-#include <coear>
 
 const char* tab_tokentype[] =
 {
@@ -245,7 +243,7 @@ static void printtok(char* addr, stduint typ, bool readonly = false) {
 	if (typ >= numsof(tab_tokentype)) return;
 	printf("[");
 	if (readonly) printf("(readonly)");
-	printf("%s] ", tab_tokentype[typ], addr);
+	printf("%s] ", tab_tokentype[typ]);
 	switch (typ)
 	{
 	case tok_number:

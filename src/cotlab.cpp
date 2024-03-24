@@ -3,17 +3,10 @@
 // ModuTitle: COTLAB Console
 // Copyright: Dosconio COTLAB, GNU-GPL Version 3
 
-#include <cinc>
-#include <alice.h>
-#include <aldbg.h>
-#include <ustring.h>
-#include <consio.h>
-#include <cinc>
-#include "../inc/contask.h"
-#include "../inc/cothead.h"
-#include <coear>
 #include <stdio.h>
 #include <iostream>//{TODO} -> conio
+#include "../inc/cothead.h"
+
 extern "C" {
 stduint _MALCOUNT = 0;
 stduint _MALLIMIT = 0x1000;
@@ -46,6 +39,7 @@ int cotmain(int argc, char** argv) {
 	new (ic_mac) uni::InodeChain(true); ic_mac->Onfree((_tofree_ft)ReleaseTofreeCotlabInode);
 	new (ic_sen) uni::InodeChain(true); ic_sen->Onfree((_tofree_ft)ReleaseTofreeCotlabInode);
 	new (ic_ise) uni::InodeChain(true); ic_ise->Onfree((_tofree_ft)ReleaseTofreeCotlabInode);
+	uni::InodeChain* ic_list[]{ ic_mac, ic_sen, ic_ise };
 
 	uni::Coe* local_pi = zalcof(uni::Coe); new (local_pi) uni::Coe(uni::Coe::pi());
 	uni::Coe* local_e = zalcof(uni::Coe); new (local_e) uni::Coe(uni::Coe::e());
@@ -114,7 +108,7 @@ int cotmain(int argc, char** argv) {
 		// else : A single identifier which is not a valuable for,
 		//        cotlib void(void) functions will take over
 		else {
-			Contask ctask(innbuf, CONTASK_BUF);//{TODO} task-pool and peculiar function
+			Contask ctask(innbuf, CONTASK_BUF, ic_list);//{TODO} task-pool and peculiar function
 			ctask.Prep(); // ctask.PrintDebug();
 			ctask.Parse(); // ctask.PrintDebug();
 			if (ctask.Execute()) {
