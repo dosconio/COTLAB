@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include "../inc/cothead.h"
+#include "../inc/idenchain.h"
 
 const char* tab_tokentype[] =
 {
@@ -14,90 +15,91 @@ const char* tab_tokentype[] =
 	"u8str", // ...
 };
 
+
 // ---- ---- ---- ---- Operator List ---- ---- ---- ----
 uni::TokenOperator // Builtin Prefix "OP@"
-	sufmem{ ".","SUFMEMB" },
+sufmem{ ".","SUFMEMB" },
 \
-	arfact{ "!","ARIFACT" },
-	sufadd{ "++","SUFADD" },
-	sufsub{ "--","SUFSUB" },
-	// {cancelled} sufme2{ "->","SUFMEMB" },
-	// "[\1]", "ARRSSC", "{\1}", "OBRACE" // <0> "a[b]c => ARRSSC(a,b)c"
+arfact{ "!","ARIFACT" },
+sufadd{ "++","SUFADD" },
+sufsub{ "--","SUFSUB" },
+// {cancelled} sufme2{ "->","SUFMEMB" },
+// "[\1]", "ARRSSC", "{\1}", "OBRACE" // <0> "a[b]c => ARRSSC(a,b)c"
 \
-	preadd{ "++","OP@PREADD" },
-	presub{ "--","OP@@PRESUB" },
-	preposi{ "+","OP@PREPOSI" },
-	prenega{ "-","OP@PRENEGA" },
-	prelognot{ "!","OP@LOGNOT" },
-	prebitnot{ "~","OP@BITNOT" },
-	prememb{ "*","OP@PREMEMB" },
-	preaddr{ "&","OP@PREADDR" },
-	presizeof{ "sizeof","OP@SIZEOF" },
+preadd{ "++","OP@PREADD" },
+presub{ "--","OP@@PRESUB" },
+preposi{ "+","OP@PREPOSI" },
+prenega{ "-","OP@PRENEGA" },
+prelognot{ "!","OP@LOGNOT" },
+prebitnot{ "~","OP@BITNOT" },
+prememb{ "*","OP@PREMEMB" },
+preaddr{ "&","OP@PREADDR" },
+presizeof{ "sizeof","OP@SIZEOF" },
 \
-	aripow{ "^","OP@ARIPOW",OpARIPOW },
+aripow{ "^","OP@ARIPOW",OpARIPOW },
 \
-	arimul{ "*","OP@ARIMUL",OpARIMUL },
-	aridiv{ "/","OP@ARIDIV",OpARIDIV },
-	arirem{ "%","OP@ARIREM" },
+arimul{ "*","OP@ARIMUL",OpARIMUL },
+aridiv{ "/","OP@ARIDIV",OpARIDIV },
+arirem{ "%","OP@ARIREM" },
 \
-	ariadd{ "+","OP@ARIADD",OpARIADD },
-	arisub{ "-","OP@ARISUB",OpARISUB },
+ariadd{ "+","OP@ARIADD",OpARIADD },
+arisub{ "-","OP@ARISUB",OpARISUB },
 \
-	bitshl{ "<<","OP@BITSHL" },
-	bitshr{ ">>","OP@BITSHR" },
+bitshl{ "<<","OP@BITSHL" },
+bitshr{ ">>","OP@BITSHR" },
 \
-	jbelow{ "<","OP@JBELOW" },
-	jbeequ{ "<=","OP@JBEEQU" },
-	jgreat{ ">","OP@JGREAT" },
-	jgrequ{ ">=","OP@JGREQU" },
+jbelow{ "<","OP@JBELOW" },
+jbeequ{ "<=","OP@JBEEQU" },
+jgreat{ ">","OP@JGREAT" },
+jgrequ{ ">=","OP@JGREQU" },
 \
-	jequal{ "==","OP@JEQUAL" },
-	jnoteq{ "!=","OP@JNOTEQ" },
+jequal{ "==","OP@JEQUAL" },
+jnoteq{ "!=","OP@JNOTEQ" },
 \
-	bit_and{ "&","OP@BITAND" },
+bit_and{ "&","OP@BITAND" },
 \
-	bit_xor{ "^","OP@BITXOR" },
+bit_xor{ "^","OP@BITXOR" },
 \
-	bit_or{ "|","OP@BITWOR" },
+bit_or{ "|","OP@BITWOR" },
 \
-	logand{ "&&","OP@LOGAND" },
+logand{ "&&","OP@LOGAND" },
 \
-	logior{ "||","OP@LOGIOR" },
+logior{ "||","OP@LOGIOR" },
 \
-	ternar{ "\2?\2:\2","OP@TERNAR" },
+ternar{ "\2?\2:\2","OP@TERNAR" },
 \
-	assign{ "=","OP@ASSIGN" },
-	agnsum{ "+=","OP@AGNSUM" },
-	agndif{ "-=","OP@AGNDIF" },
-	agnpro{ "*=","OP@AGNPRO" },
-	agnquo{ "/=","OP@AGNQUO" },
-	agnrem{ "%=","OP@AGNREM" },
-	agnshl{ "<<+","OP@AGNSHL" },
-	agnshr{ ">>=","OP@AGNSHR" },
-	agnand{ "&=","OP@AGNAND" },
-	agnxor{ "^=","OP@AGNXOR" },
-	agnor{ "|=","OP@ASGNOR" }
+assign{ "=","OP@ASSIGN" },
+agnsum{ "+=","OP@AGNSUM" },
+agndif{ "-=","OP@AGNDIF" },
+agnpro{ "*=","OP@AGNPRO" },
+agnquo{ "/=","OP@AGNQUO" },
+agnrem{ "%=","OP@AGNREM" },
+agnshl{ "<<+","OP@AGNSHL" },
+agnshr{ ">>=","OP@AGNSHR" },
+agnand{ "&=","OP@AGNAND" },
+agnxor{ "^=","OP@AGNXOR" },
+agnor{ "|=","OP@ASGNOR" }
 \
-	// blkjdg{ "\2if\2:\2","OP@BLKJDG" }
+// blkjdg{ "\2if\2:\2","OP@BLKJDG" }
 ;
 
 uni::TokenOperator \
-opapd001[] = {sufmem},
-opsuffix[] = {arfact, sufadd, sufsub},
-opprefix[] = {preadd, presub, preposi, prenega, prelognot, prebitnot, prememb, preaddr, presizeof},
-opmid001[] = {aripow},
-opmid002[] = {arimul, aridiv, arirem},
-opmid003[] = {ariadd, arisub},
-opmid004[] = {bitshl, bitshr},
-opmid005[] = {jbelow, jbeequ, jgreat, jgrequ},
-opmid006[] = {jequal, jnoteq},
-opmid007[] = {bit_and},
-opmid008[] = {bit_xor},
-opmid009[] = {bit_or},
-opmid010[] = {logand},
-opmid011[] = {logior},
+opapd001[] = { sufmem },
+opsuffix[] = { arfact, sufadd, sufsub },
+opprefix[] = { preadd, presub, preposi, prenega, prelognot, prebitnot, prememb, preaddr, presizeof },
+opmid001[] = { aripow },
+opmid002[] = { arimul, aridiv, arirem },
+opmid003[] = { ariadd, arisub },
+opmid004[] = { bitshl, bitshr },
+opmid005[] = { jbelow, jbeequ, jgreat, jgrequ },
+opmid006[] = { jequal, jnoteq },
+opmid007[] = { bit_and },
+opmid008[] = { bit_xor },
+opmid009[] = { bit_or },
+opmid010[] = { logand },
+opmid011[] = { logior },
 //{} opmid012[] = {ternar},
-opmid013[] = {assign, agnsum, agndif, agnpro, agnquo, agnrem, agnshl, agnshr, agnand, agnxor, agnor}
+opmid013[] = { assign, agnsum, agndif, agnpro, agnquo, agnrem, agnshl, agnshr, agnand, agnxor, agnor }
 // opmid014[] = {blkjdg}
 ;
 
@@ -129,26 +131,27 @@ uni::NodeChain* CotInitOperators() {
 	TOG* grpxx_mid013 = new TOG(opmid013, numsof(opmid013), false);
 	// TokenOpeartorGroup grpxx_mid014(opmid014, numsof(opmid014), false, 3);
 	//
-	NodeChain* nc = zalcof(NodeChain);
-	new (nc) NodeChain(false);
-	nc->Append(grp_append_0);
-	nc->Append(grp00_suffix);
-	nc->Append(grp01_prefix);
-	nc->Append(grpxx_mid001);
-	nc->Append(grpxx_mid002);
-	nc->Append(grpxx_mid003);
-	nc->Append(grpxx_mid004);
-	nc->Append(grpxx_mid005);
-	nc->Append(grpxx_mid006);
-	nc->Append(grpxx_mid007);
-	nc->Append(grpxx_mid008);
-	nc->Append(grpxx_mid009);
-	nc->Append(grpxx_mid010);
-	nc->Append(grpxx_mid011);
-	nc->Append(grpxx_mid013);
-	//{TEMP} Complete in the near future ...
+	NodeChain* nc = new NodeChain();
+	*nc
+		<< (*grp_append_0)
+		<< (*grp00_suffix)
+		<< (*grp01_prefix)
+		<< (*grpxx_mid001)
+		<< (*grpxx_mid002)
+		<< (*grpxx_mid003)
+		<< (*grpxx_mid004)
+		<< (*grpxx_mid005)
+		<< (*grpxx_mid006)
+		<< (*grpxx_mid007)
+		<< (*grpxx_mid008)
+		<< (*grpxx_mid009)
+		<< (*grpxx_mid010)
+		<< (*grpxx_mid011)
+		<< (*grpxx_mid013);
+	nc->func_free = uni::NodeHeapFreeSimple;
 	return nc;
 }
+
 
 // ---- ---- ---- ---- Conversion ---- ---- ---- ----
 //void ArithExplicitCoversionRise(dnode* const a, size_t typ)
@@ -210,36 +213,59 @@ uni::NodeChain* CotInitOperators() {
 //		dest->type = dt_float;
 //	}
 //}
-// ---- ---- ---- ---- Destructure ---- ---- ---- ----
+// 
 
-void ReleaseTofreeCotlabInode(uni::Inode* n) {
-	extern void CotResourceRemove(void* obj, stduint typ);
-	mfree(n->addr);
-	CotResourceRemove((void*)n->data, n->type);
-	memf(n);
-}
 
-// Destructure object according to type
-void CotResourceRemove(void* obj, stduint typ)
-{
-	if (!obj) return;
-	switch (typ) {
-	case tok_number:
-		((uni::Coe*)obj)->~Coe();
-		mfree(obj);
-		break;
-	default:
-		memf(obj);
-		break;
+void* CotCopy(void* inp, stduint typ) {
+	if (!inp || !typ) return 0;
+	if (typ == dt_float) {
+		return new uni::Coe(*(uni::Coe*)inp);
+	}
+	else {
+		return StrHeap((char*)inp);
 	}
 }
 
+// ---- ---- ---- ---- Destructure ---- ---- ---- ----
+
+// Destructure object according to type
+// Do not free p_iobj
+void CotResourceRemove(IdenObject* p_iobj)
+{
+	void*& obj = p_iobj->offs;
+	if (!obj) return;
+	switch (p_iobj->type) {
+	case tok_number:
+		((uni::Coe*)obj)->~Coe();
+		break;
+	default:
+		break;
+	}
+	memf(obj);
+}
+
+void CotReleaseInode(pureptr_t offs) {
+	Letvar(obj, uni::Dnode*, offs);
+	mfree(obj->addr);// the identifier text in heap
+	CotResourceRemove((IdenObject*)obj->type);// content data in heap
+	mfree(obj->type);// the identifier text in heap
+}
+
+// ---- ---- ---- ---- Iden Chain ---- ---- ---- ----
 
 
+IdenChain::IdenChain() : chn() {
+	chn.func_comp = (_tocomp_ft)StrCompare;
+	chn.refChain().func_free = CotReleaseInode;
+}
+
+IdenChain::~IdenChain() {
+
+}
 
 // ---- ---- ---- ---- Print ---- ---- ---- ----
 
-static void printtok(char* addr, stduint typ, bool readonly = false) {
+static void printtok(pureptr_t addr, stduint typ, bool readonly = false) {
 	if (typ >= numsof(tab_tokentype)) return;
 	printf("[");
 	if (readonly) printf("(readonly)");
@@ -247,7 +273,8 @@ static void printtok(char* addr, stduint typ, bool readonly = false) {
 	switch (typ)
 	{
 	case tok_number:
-		printf("%lf", ((uni::Coe*)addr)->ToDouble());
+		//_TEMP printf("%s", addr);
+		printf("%lf", double(*(uni::Coe*)addr));
 		break;
 	default:
 		printf("%s", addr);
@@ -262,7 +289,7 @@ static void NnodePrint(const uni::Nnode* nnod, unsigned nest)
 	while (crt)
 	{
 		for0(i, nest) printf(i + 1 == _LIMIT ? "->" : "--");
-		printtok(crt->addr, crt->type);
+		printtok(crt->offs, crt->type);
 		if (crt->subf) NnodePrint(crt->subf, nest + 1);
 		crt = crt->next;
 	}
@@ -274,23 +301,25 @@ void Contask::PrintDebug() {
 	if (stage == STAGE_PREPED || stage == STAGE_PARSED || stage == STAGE_EXECUTED || (stage == STAGE_FAILED && npu && npu->GetNetwork()->Root())); else
 		return;
 	if (stage == STAGE_PREPED) {
-		uni::Tnode* crttn = tpu->GetChain()->Root();
+		uni::Tnode* crttn = tpmRoot();
 		if (!crttn->next) return;
 		crttn = crttn->next;
 		while (crttn) {
-			printtok((char*)crttn->offs, crttn->type);
+			printtok(crttn->offs, crttn->type);
 			crttn = crttn->next;
 		}
 	}
-	else if (npu && npu->GetNetwork() && npu->GetNetwork()->Count()) 
+	else if (npu && npu->GetNetwork())
 		NnodePrint(npu->GetNetwork()->Root(), 0);
 }
 
-void InodePrint(uni::InodeChain* ic) {
-	uni::Inode* crt = ic->Root();
+void InodePrint(IdenChain* ic) {
+	uni::Dnode* crt = ic->refChain().Root();
 	if (crt) do {
+		IdenObject& io = *(IdenObject*)crt->type;
 		printf("%s ", crt->addr);
-		printtok((char*)crt->data, crt->type, crt->readonly);
+		printtok(io.offs, io.type, !io.mutabl);
 	} while (crt = crt->next);
 }
+
 

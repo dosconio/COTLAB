@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <fstream>
 #include "../inc/cothead.h"
+#include "../inc/idenchain.h"
 
 static char cotbuf[0x1000];
 static union {
@@ -13,57 +14,58 @@ static union {
 	const char* sp;
 };//{TODO} out of class
 
-
-
 static int fgetnext(void) { return fgetc(fp); }
 static void fseekp(ptrdiff_t l) { fseek(fp, (long)l, SEEK_CUR); }
 static int sgetnext(void) { return (*sp) ? *sp++ : EOF; }
 static void sseekp(ptrdiff_t l) { sp += l; }
 
+//{TODO} make COTLAB into a dynamic class
 stduint crtrow, crtcol;
 char* crtmsg;
 
+//{TODE} template<typename type0> void ReleaseTofreeCotlab(type0* n);
 
-template<typename type0> void ReleaseTofreeCotlab(type0* n);
-
-Contask::Contask(const char* fname, consrc_t srctyp, uni::InodeChain** idens) {
-	//{TODO} receive varlist inode[3]*
+Contask::Contask(const char* fname, consrc_t srctyp, IdenChain* idens) {
 	consrc = srctyp;
 	filename = fname;
 	stage = STAGE_OUTSIDE;
-	tpu = zalcof(uni::TokenParseUnit);
 	if (idens) {
-		list_macros = idens[0];
-		list_usenss = idens[1];
-		list_isenss = idens[2];
+		list_macros = &idens[0];
+		list_usenss = &idens[1];
+		list_isenss = &idens[2];
 	}
 	if (consrc == CONTASK_FILE)
-		new (tpu)uni::TokenParseUnit(fgetnext, fseekp, cotbuf);
+		tpm = new uni::TokenParseManager(fgetnext, fseekp, cotbuf);
 	else if (consrc == CONTASK_BUF)
-		new (tpu)uni::TokenParseUnit(sgetnext, sseekp, cotbuf);
+		tpm = new uni::TokenParseManager(sgetnext, sseekp, cotbuf);
+	tpm->dc.func_free = uni::DnodeHeapFreeSimple;
+	tpm->dc.setExtnField(sizeof(uni::TnodeField));
 	npu = 0;
 	stage = STAGE_RAW;
 }
 
 Contask::~Contask() {
-	if ((stage == STAGE_EXECUTED || stage == STAGE_PARSED) || !tpu)
+	if ((stage == STAGE_EXECUTED || stage == STAGE_PARSED) || !tpm)
 		npu->~NestedParseUnit();
-	else tpu->~TokenParseUnit();
+	else {
+		tpm->~TokenParseManager();
+		mfree(tpm);
+	}
 	mfree(npu);
 }
 
 void Contask::Prep() {
 	sp = filename;
 	if (stage != STAGE_RAW) return;
-	stage = tpu->TokenParse() ? STAGE_PREPED : STAGE_FAILED;
+	stage = tpm->TokenParse() ? STAGE_PREPED : STAGE_FAILED;
 }
 
 void Contask::Parse() {
 	if (stage == STAGE_PREPED) {
-		npu = zalcof(uni::NestedParseUnit);
-		new (npu) uni::NestedParseUnit(*tpu->GetChain(), CotInitOperators());
-		mfree(tpu);
-		npu->GetNetwork()->Onfree((_tofree_ft)(ReleaseTofreeCotlab<uni::Nnode>));
+		npu = new uni::NestedParseUnit(tpm->dc, CotInitOperators(), sizeof(cotnode));
+		mfree(tpm);
+		npu->GetNetwork()->extn_field = sizeof(cotnode);
+		npu->GetNetwork()->func_free = ((_tofree_ft)(ReleaseTofreeCotlab<uni::Nnode>));
 		npu->Parse();
 		if (!npu->parsed) {
 			stage = STAGE_FAILED;
@@ -78,11 +80,11 @@ void Contask::Parse() {
 		}
 		stage = STAGE_PARSED;
 	}
-	
+
 }
 
 bool Contask::Execute() {
-	if (stage == STAGE_FAILED ||stage != STAGE_PARSED || !npu || !npu->GetNetwork()->Count()) return false;
+	if (stage == STAGE_FAILED || stage != STAGE_PARSED || !npu) return false;
 	stage = STAGE_EXECUTED;
 	uni::Nnode* n = npu->GetNetwork()->Root();
 	if (!CotExecuate(n, npu->GetNetwork(), n, list_usenss)) {
@@ -109,6 +111,4 @@ void cabort(const char* fname, const char* str) {
 	}
 	fprintf(stderr, "\n");
 }
-
-
 

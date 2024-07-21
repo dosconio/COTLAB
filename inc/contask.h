@@ -7,6 +7,7 @@
 #define _INC_CONTASK
 
 #include <cpp/nodes>
+#include "idenchain.h"
 
 enum consrc_t { CONTASK_FILE, CONTASK_BUF };
 
@@ -17,16 +18,16 @@ private:
 	consrc_t consrc;
 	const char* filename;
 	stage_t stage;
-	uni::InodeChain* list_macros;// > nsens_objs
-	uni::InodeChain* list_usenss;// > isens_objs
-	uni::InodeChain* list_isenss;// inode::property as [...|MUTABLE]
+	IdenChain* list_macros;// > nsens_objs
+	IdenChain* list_usenss;// > isens_objs
+	IdenChain* list_isenss;// inode::property as [...|MUTABLE]
 	bool Link();
 public:
-	uni::TokenParseUnit* tpu;
+	uni::TokenParseManager* tpm;
 	uni::NestedParseUnit* npu;
 	uni::TnodeChain* returns;
 
-	Contask(const char* fname = "cotemp.bat", consrc_t srctyp = CONTASK_FILE, uni::InodeChain** idens = 0);
+	Contask(const char* fname = "cotemp.bat", consrc_t srctyp = CONTASK_FILE, IdenChain* idens = 0);
 	~Contask();
 	void Prep();
 	void Parse();
@@ -37,8 +38,17 @@ public:
 		if (stage == STAGE_PARSED) Execute();
 	}
 	void PrintDebug();
-
+	uni::Tnode* tpmRoot() { return (uni::Tnode*)tpm->dc.Root(); }
 };
 
+struct cotnode {
+	uni::_tok_bindfunc_t bind;
+	stduint row;
+	stduint col;
+};
+
+inline cotnode& refCnode(uni::Nnode* nod) {
+	return *(cotnode*)(nod->GetExtnField());
+}
 
 #endif // _INC_CONTASK

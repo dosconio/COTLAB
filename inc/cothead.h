@@ -2,14 +2,8 @@
 #ifndef __COTHEAD
 #define __COTHEAD
 
-#include <cpp/cinc>
-#include <c/alice.h>
-#include <c/aldbg.h>
-#include <c/ustring.h>
-#include <c/consio.h>
-#include <cpp/cinc>
-#include <cpp/nodes>
-#include <cpp/coear>
+#include <cpp/basic>
+#include <cpp/console>
 #include <new>
 #include "contask.h"
 
@@ -41,24 +35,25 @@ enum datatype// for Nesnode.iden, all entity
 	dt_bool
 };
 
-template<typename type0> void ReleaseTofreeCotlab(type0* n)
-{
-	extern void CotResourceRemove(void* obj, stduint typ);
-	CotResourceRemove((void*)n->offs, n->type);
-	memf(n);
-}
-void ReleaseTofreeCotlabInode(uni::Inode* n);
+#define isaritype(x)(x==dt_int||x==dt_float||x==dt_cplx||x==dt_posi)
 
 // cotoken.cpp
 extern uni::NodeChain* CotInitOperators();
-extern void InodePrint(uni::InodeChain* ic);
-void CotResourceRemove(void* obj, stduint typ);
+extern void InodePrint(IdenChain* ic);
+void CotResourceRemove(IdenObject* p_iobj);
+
+template<typename type0> void ReleaseTofreeCotlab(type0* n)
+{
+	IdenObject io = { (datatype)n->type, n->offs };
+	CotResourceRemove(&io);
+}
+void CotReleaseInode(pureptr_t offs);
 
 // cotlib.cpp
 extern stduint crtrow, crtcol;
 extern char* crtmsg;
 void* CotCopy(void* inp, stduint typ);
-bool CotExecuate(uni::Nnode* inp, uni::NnodeChain* nc, uni::Nnode*& parencrt, uni::InodeChain* list_sens);
+bool CotExecuate(uni::Nnode* inp, uni::NnodeChain* nc, uni::Nnode*& parencrt, IdenChain* list_sens);
 void OpARIPOW(uni::DnodeChain* io);
 void OpARIMUL(uni::DnodeChain* io);
 void OpARIDIV(uni::DnodeChain* io);
