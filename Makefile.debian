@@ -1,10 +1,11 @@
 # dosconio/COTLAB, powered by unisym
 #{TEMP} only for 64-bit
 BINDIR := /usr/bin
+CXXDEF = -D_DEBUG -D_Linux64 -D_PROPERTY_STRING_OFF -D_INC_STDLIB
 
 all: # build sources for `install`
-	-mv libl64 libl64.a
-	g++ -D_DEBUG -D_Linux src/*.cpp -Iinc -L. -ll64 -O3 -o cot -Wno-unused-result
+	-mv libl64d libl64d.a
+	g++ $(CXXDEF) src/*.cpp -Iinc -L. -ll64d -O3 -o cot -w
 install: # a must
 	mkdir -p ${DESTDIR}${BINDIR}
 	cp ./cot ${DESTDIR}${BINDIR}/

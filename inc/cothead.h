@@ -2,10 +2,12 @@
 #ifndef __COTHEAD
 #define __COTHEAD
 
+extern "C" int abs(int);
+
 #include <cpp/basic>
-#include <cpp/console>
-#include <new>
-#include "contask.h"
+#include <cpp/nodes>
+#include <c/mnode.h>
+#include <c/consio.h>
 
 extern const char* tab_tokentype[];
 
@@ -33,6 +35,46 @@ enum datatype// for Nesnode.iden, all entity
 	dt_rangec,// 0( , ) 3[ , ] 2[ , ) 1( , ] (by HrnAr x, y and t, t as type)
 
 	dt_bool
+};
+
+
+struct IdenObject {
+	enum datatype type;
+	pureptr_t offs;
+	bool mutabl;
+};
+
+struct IdenChain {
+	uni::Mchain chn;
+	IdenChain();
+	~IdenChain();
+	uni::Dchain& refChain() { return chn.refChain(); }
+
+	IdenObject* operator[] (const char* iden) {
+		uni::Dnode* res = nullptr;
+		(void)chn.isExist((pureptr_t)iden, &res);
+		return res ? (IdenObject*)res->type : nullptr;
+	}
+
+	void Modify(const char* iden, pureptr_t offs, datatype typ, bool mutabl) {
+		IdenObject* io = zalcof(IdenObject), * tmp;
+		io->type = typ;
+		io->offs = offs;
+		io->mutabl = mutabl;
+		if (tmp = self[iden]) {
+			if (!tmp->mutabl) return;
+		}
+		chn.Map((pureptr_t)StrHeap(iden), (pureptr_t)io);
+	}
+
+	void Remove(const char* iden, bool consider_mutabl = true) {
+		uni::Dnode* dn = refChain().LocateNode((pureptr_t)iden, chn.func_comp);
+		if (!dn) return;
+		IdenObject* io = (IdenObject*)dn->type;
+		if (consider_mutabl && !io->mutabl) return;
+		refChain().Remove(dn);
+	}
+
 };
 
 #define isaritype(x)(x==dt_int||x==dt_float||x==dt_cplx||x==dt_posi)

@@ -7,7 +7,6 @@
 #define _INC_CONTASK
 
 #include <cpp/nodes>
-#include "idenchain.h"
 
 enum consrc_t { CONTASK_FILE, CONTASK_BUF };
 

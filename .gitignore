@@ -1,5 +1,6 @@
 .vs/
-.deb/
+COTLAB/
 COTLAB.sln
 COTLAB.vcxproj*
 cotlab.org/COTLAB/*
+.deb/

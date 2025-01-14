@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <cpp/nodes>
 #include "../inc/cothead.h"
+#include "../inc/contask.h"
 extern pureptr_t glb;
 
 #define FuncOp2(iden,sym) void Op##iden(uni::DnodeChain* io) {\

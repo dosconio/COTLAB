@@ -4,9 +4,8 @@
 // Copyright: Dosconio COTLAB, GNU-GPL Version 3
 
 #include <stdio.h>
-#include <fstream>
 #include "../inc/cothead.h"
-#include "../inc/idenchain.h"
+#include "../inc/contask.h"
 
 static char cotbuf[0x1000];
 static union {

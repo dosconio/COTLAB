@@ -5,7 +5,7 @@
 
 #include <stdio.h>
 #include "../inc/cothead.h"
-#include "../inc/idenchain.h"
+#include "../inc/contask.h"
 
 const char* tab_tokentype[] =
 {
