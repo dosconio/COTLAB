@@ -3,7 +3,7 @@ VERS  =0.0.2.0
 
 builds = ./src/*.cpp
 warns = -Wno-unused-result -w
-cxxdef = -D_DEBUG -D_PROPERTY_STRING_OFF -D_INC_STDLIB
+cxxdef = -D_DEBUG -D_PROPERTY_STRING_OFF
 
 CX32 = g++ -m32 -s -O3 -I$(uincpath) -L$(ubinpath) $(cxxdef)
 CX64 = g++ -m64 -s -O3 -I$(uincpath) -L$(ubinpath) $(cxxdef)
@@ -18,9 +18,9 @@ lin64:
 lin32:
 	sudo ${CX32} -D_Linux32 $(builds) -ll32d -o /usr/bin/cot $(warns)
 
-win32:
+win64:
 	windres -i ./inc/resources.rc -o ../_obj/cotres.obj
-	${CX32} -D_Win32 $(builds) ../_obj/cotres.obj -I$(udir_win)/inc -L../_bin -lw32d -s -O3 -o "../_bin/cot.exe"
+	${CX32} -D_Win64 $(builds) ../_obj/cotres.obj -I$(udir_win)/inc -L$(ubinpath) -lw64d -o $(ubinpath)/cot.exe -w -m64
 
 debian: 
 	-rm -rf .deb

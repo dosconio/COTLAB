@@ -155,6 +155,8 @@ bool Contask::Link() {
 	} while (crtnes = crtnes->next);
 	LinkNumber(this->npu->GetNetwork()->Root(), this->npu->TokenOperatorGroupChain);
 	// Link
+	if (!state) return state;
+	//{TODO} There is a memleak
 	return StrTokenNestLinkage(this->npu->GetNetwork()->Root(), this->npu->TokenOperatorGroupChain) && state;
 }
 

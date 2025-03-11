@@ -9,8 +9,9 @@
 
 const char* tab_tokentype[] =
 {
-	"NON", "ANY", "COM", "DIR", "SYM", "SPA", "XXX", "IDN",
-	"STR", "NUM", "EOF", "FUN",
+	"NON", "ANY", 
+	"SYM", "SPA", "NUM", "IDN", "XXX",
+	"COM", "DIR", "STR",  "EOF", "FUN",
 	"EOF","complex","position","wides",
 	"u8str", // ...
 };
@@ -273,8 +274,8 @@ static void printtok(pureptr_t addr, stduint typ, bool readonly = false) {
 	switch (typ)
 	{
 	case tok_number:
-		//_TEMP printf("%s", addr);
-		printf("%lf", double(*(uni::Coe*)addr));
+		//printf("%lf", double(*(uni::Coe*)addr));
+		printf("%s", uni::String(*(uni::Coe*)addr).reference());
 		break;
 	default:
 		printf("%s", addr);

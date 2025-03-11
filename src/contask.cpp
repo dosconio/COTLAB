@@ -3,9 +3,9 @@
 // ModuTitle: COTLAB Task
 // Copyright: Dosconio COTLAB, GNU-GPL Version 3
 
-#include <stdio.h>
 #include "../inc/cothead.h"
 #include "../inc/contask.h"
+#include <stdio.h>
 
 static char cotbuf[0x1000];
 static union {
@@ -57,6 +57,11 @@ void Contask::Prep() {
 	sp = filename;
 	if (stage != STAGE_RAW) return;
 	stage = tpm->TokenParse() ? STAGE_PREPED : STAGE_FAILED;
+#ifdef _DEBUGX
+	for (auto i = tpm->dc.Root(); i; i = i->next) {
+		printf(">[%s]\t%s\n", tab_tokentype[i->type], i->addr);
+	}
+#endif
 }
 
 void Contask::Parse() {
@@ -97,17 +102,14 @@ bool Contask::Execute() {
 
 // Cotlab Abort : Cancel using farjump
 void cabort(const char* fname, const char* str) {
-	//{} ConStyleAbnormal();
+	//{} do not use union fname
 	if (!fname)
-		fprintf(stderr, "Error R%" PRIuPTR " C%" PRIuPTR, crtrow, crtcol);
-	else fprintf(stderr, "Error F\"%s\" [R%" PRIuPTR " C%" PRIuPTR "]", fname, crtrow, crtcol);
-	//{} ConStyleNormal();
-	fprintf(stderr, " %s", str);
+		plogerro("R%[u] C%[u]", crtrow, crtcol);
+	else plogerro("F\"%s\" [R%[u] C%[u]]", fname, crtrow, crtcol);
 	crtcol = 0; crtrow = 0;
 	if (crtmsg) {
-		fprintf(stderr, " (%s)", crtmsg);
+		plogerro("%s (%s)", str, crtmsg);
 		memf(crtmsg);
-	}
-	fprintf(stderr, "\n");
+	} else plogerro(" %s", str);
 }
 

@@ -5,51 +5,45 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 
-#include <stdio.h>
-#include <fstream>
+#include <c/file.h>
 #include "../inc/cothead.h"
 #include "../inc/contask.h"
 
-#define CotTitle "COTLAB Console Build " __DATE__ "\n"
-
-const char* ConMode[]{
-	"Shell", "File", "Command"
-};
+#define CotTitle "COTLAB Console Build " __DATE__
 
 char ulibver[16 + 1] = { "Not detected." };// from unisymlib
+uni::String uver_str(sliceof(ulibver));
 
-enum option_t { COTLAB_OPTION_SHELL, COTLAB_OPTION_FILE, COTLAB_OPTION_COMMAND };
-static option_t option{ COTLAB_OPTION_SHELL };
+rostr ConMode[]{ "Shell", "File", "Command"};
+enum class option_t { SHELL, FILE, COMMAND };
+static option_t option{ option_t::SHELL };
 
 enum prompt_t { COTLAB_PROMPT_FULL, COTLAB_PROMPT_TRIARROW };
 static prompt_t prompt{ COTLAB_PROMPT_FULL };
 
 struct CotStrBuff : public uni::String {
-	CotStrBuff(stduint lenbuf = 0) : String(lenbuf) {
+	CotStrBuff(stduint lenbuf = 0x1000) : String(lenbuf) { }
+	stduint getStdin() { 
+		return ConScanLine(addr, limits);
 	}
-	stduint getStdin() { return ConScanLine(addr, counts); }
-	CotStrBuff& getEnv(const char* str) { self.String::operator=(getenv(str)); return self; }
+	CotStrBuff& getEnv(const char* str) { 
+		StrCopy(addr, getenv(str));// self.String::operator=(getenv(str));
+		return self; 
+	}
 	CotStrBuff& getCwd() { (void)ConGetCurrentDirectory(addr, limits); return self; }
-	CotStrBuff& FormatPath() {
-		_TEMP // with suffix
-			for0(i, StrLength(addr)) if (addr[i] == '\\') 
-				addr[i] = '/';
-		if (StrCharLast(addr) != '/') uni::String::operator+=("/");
+	CotStrBuff& FormatPath() { // with suffix
+		//{TODO} Replace
+		uni::String& the_str = self;
+		Replaced("\\", "/");
+		if (self[-1] != '/') self += "/";
 		return self;
 	}
 };
-struct CotFile {
-	CotFile(const uni::String& fname, const char* mode = "r") { pf = fopen(fname.reference(), mode); }
-	~CotFile() { fclose(pf); pf = nullptr; }
-	operator FILE* () { return pf; }
-	bool getc(char& ref) { int ch = fgetc(pf); ref = (ch == EOF) ? 0 : (char)ch; return (ch != EOF); }
-protected:
-	FILE* pf;
-};
+
+
 pureptr_t glb;
 int cotmain(int argc, char** argv) {
 	using namespace uni;
-	stduint i = 0;
 
 	IdenChain ic_list[3];
 	IdenChain& ic_mac = ic_list[0], & ic_sen = ic_list[1], & ic_ise = ic_list[2];
@@ -59,48 +53,48 @@ int cotmain(int argc, char** argv) {
 	ic_sen.Modify("e", new Coe(Coe::e()), dt_float, false);
 
 	CotStrBuff cbuff;
-	cbuff.getEnv("ulibpath").FormatPath() += "Script/Cotoba/version";
-	for (CotFile verfile(cbuff); i < sizeof(ulibver) - 1 &&
-		(verfile.getc(ulibver[i])); i++);
-	for (i = 1; i < argc; i++) {
+	{
+		cbuff.getEnv("ulibpath").FormatPath() += "Script/Cotoba/version";
+		HostFile verfile(cbuff.reference());
+		if (bool(verfile)) verfile >> uver_str;
+	}
+	for (stduint i = 1; i < argc; i++) {
 		if (argv[i][0] == '-') switch (argv[i][1]) {
 		case 'c':
-			option = COTLAB_OPTION_COMMAND; break;
+			option = option_t::COMMAND; break;
 		case 's':// omit the rest of this argv
-			option = COTLAB_OPTION_SHELL; break;
+			option = option_t::SHELL; break;
 		case 'f':// follow by a file name
-			option = COTLAB_OPTION_FILE; break;
+			option = option_t::FILE; break;
 		default:
 			printlog(_LOG_ERROR, "Unknown Option: -%s", argv[i]);
 			return -1;
 		}
 	}
-	printlog(_LOG_INFO, "Library: %s", ulibver);
-	printlog(_LOG_INFO, "Mode   : %s", ConMode[option]);
+	ploginfo("Library: %s", ulibver);
+	ploginfo("Mode   : %s", ConMode[_IMM(option)]);
 	
-	// ConStyleNormal();// <- use this for IO
 	//{TODO} implemente Console in UNISYM
 
 	switch (option) {
-	case COTLAB_OPTION_SHELL: while (true) {
-		
-		i = 0;
+	case option_t::SHELL: while (true) {
 		{
 			CotStrBuff sb(0x100);
-			Console.FormatShow("%s> ", sb.getCwd().FormatPath().reference());
+			Console.OutFormat("%s> ", sb.getCwd().FormatPath().reference());
 			cbuff.getStdin();
 			StrDeprefixSpaces(cbuff.reflect());
 		}
 		if (cbuff == "exit") break;
 		else if (cbuff == "help") {
-			Console.FormatShow(
+			Console.OutFormat(
+				CotTitle
 				"\nCOTLAB: Her SGA-4 (doscon.io), GPL-3 (cotlab.org)"
 				"\n   ||"
 				"\n   |+ Doshou Haruno [Dscn.Org.Chief] (dosconyo@gmail.com)"
 				"\n   |+ Ren    Phina  [None.Org.Advis] (   phina@ tuta.io )"
 				"\n   + UNISYM: %s\n", ulibver);
-			Console.FormatShow(
-				"Language: COTOBA 0.0.2\n"
+			Console.OutFormat(
+				"Language: COTOBA 0.0.3\n"
 			);
 		}
 		else if (cbuff == "list") {
@@ -129,7 +123,7 @@ int cotmain(int argc, char** argv) {
 			ctask.PrintDebug();
 		}
 	} break;
-	case COTLAB_OPTION_FILE:
+	case option_t::FILE:
 		//{TODO}
 		//if (!(fp = fopen(point, "r")))
 		//{
@@ -137,7 +131,7 @@ int cotmain(int argc, char** argv) {
 		//	goto endo;
 		//}
 		break;
-	case COTLAB_OPTION_COMMAND:
+	case option_t::COMMAND:
 		//{CANCELLED}
 		break;
 	default:
@@ -151,7 +145,7 @@ int cotmain(int argc, char** argv) {
 int main(int argc, char** argv) {
 	int retno = cotmain(argc, argv);
 	if (_MALCOUNT)
-		printlog(_LOG_ERROR, "\nMemory Leak: 0x%" PRIxSTD " !", _MALCOUNT);
+		printlog(_LOG_ERROR, "\nMemory Leak: %[u].", _MALCOUNT);
 	return retno;
 }
 
