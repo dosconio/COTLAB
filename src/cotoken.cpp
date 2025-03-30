@@ -1,4 +1,4 @@
-// ASCII CPP-14 TAB4 CRLF
+﻿// ASCII CPP-14 TAB4 CRLF
 // AllAuthor: @dosconio
 // ModuTitle: COTLAB Task
 // Copyright: Dosconio COTLAB, GNU-GPL Version 3
@@ -9,7 +9,7 @@
 
 const char* tab_tokentype[] =
 {
-	"NON", "ANY", 
+	"NON", "ANY",
 	"SYM", "SPA", "NUM", "IDN", "XXX",
 	"COM", "DIR", "STR",  "EOF", "FUN",
 	"EOF","complex","position","wides",
@@ -286,10 +286,11 @@ static void printtok(pureptr_t addr, stduint typ, bool readonly = false) {
 
 static void NnodePrint(const uni::Nnode* nnod, unsigned nest)
 {
-	const uni::Nnode* crt = nnod;
+	uni::Nnode* crt = (uni::Nnode*)nnod;
 	while (crt)
 	{
 		for0(i, nest) printf(i + 1 == _LIMIT ? "->" : "--");
+		printf("%d %d:", refCnode(crt).row, refCnode(crt).col);
 		printtok(crt->offs, crt->type);
 		if (crt->subf) NnodePrint(crt->subf, nest + 1);
 		crt = crt->next;

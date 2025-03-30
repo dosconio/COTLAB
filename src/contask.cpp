@@ -1,5 +1,5 @@
-// ASCII CPP-14 TAB4 CRLF
-// AllAuthor: @dosconio
+﻿// ASCII CPP-14 TAB4 CRLF
+// AllAuthor: @dosconio, @ArinaMgk
 // ModuTitle: COTLAB Task
 // Copyright: Dosconio COTLAB, GNU-GPL Version 3
 
@@ -14,9 +14,7 @@ static union {
 };//{TODO} out of class
 
 static int fgetnext(void) { return fgetc(fp); }
-static void fseekp(ptrdiff_t l) { fseek(fp, (long)l, SEEK_CUR); }
 static int sgetnext(void) { return (*sp) ? *sp++ : EOF; }
-static void sseekp(ptrdiff_t l) { sp += l; }
 
 //{TODO} make COTLAB into a dynamic class
 stduint crtrow, crtcol;
@@ -34,21 +32,23 @@ Contask::Contask(const char* fname, consrc_t srctyp, IdenChain* idens) {
 		list_isenss = &idens[2];
 	}
 	if (consrc == CONTASK_FILE)
-		tpm = new uni::TokenParseManager(fgetnext, fseekp, cotbuf);
+		pinn = new CotInn(fgetnext);
 	else if (consrc == CONTASK_BUF)
-		tpm = new uni::TokenParseManager(sgetnext, sseekp, cotbuf);
-	tpm->dc.func_free = uni::DnodeHeapFreeSimple;
-	tpm->dc.setExtnField(sizeof(uni::TnodeField));
+		pinn = new CotInn(sgetnext);
 	npu = 0;
 	stage = STAGE_RAW;
 }
 
 Contask::~Contask() {
-	if ((stage == STAGE_EXECUTED || stage == STAGE_PARSED) || !tpm)
+	if ((stage == STAGE_EXECUTED || stage == STAGE_PARSED) || dc.Count())
 		npu->~NestedParseUnit();
 	else {
-		tpm->~TokenParseManager();
-		mfree(tpm);
+		if (lp) {
+			lp->~LinearParser();
+			mfree(lp);
+		}
+		dc.~Dchain();
+		mfree(pinn);
 	}
 	mfree(npu);
 }
@@ -56,9 +56,11 @@ Contask::~Contask() {
 void Contask::Prep() {
 	sp = filename;
 	if (stage != STAGE_RAW) return;
-	stage = tpm->TokenParse() ? STAGE_PREPED : STAGE_FAILED;
+	stage = STAGE_PREPED; // tpm->TokenParse() ? STAGE_PREPED : STAGE_FAILED;
+	lp = new uni::LinearParser(*pinn);
+	lp->Parse(dc);
 #ifdef _DEBUGX
-	for (auto i = tpm->dc.Root(); i; i = i->next) {
+	for (auto i = dc.Root(); i; i = i->next) {
 		printf(">[%s]\t%s\n", tab_tokentype[i->type], i->addr);
 	}
 #endif
@@ -66,9 +68,10 @@ void Contask::Prep() {
 
 void Contask::Parse() {
 	if (stage == STAGE_PREPED) {
-		npu = new uni::NestedParseUnit(tpm->dc, CotInitOperators(), sizeof(cotnode));
-		mfree(tpm);
-		npu->GetNetwork()->extn_field = sizeof(cotnode);
+		npu = new uni::NestedParseUnit(dc, CotInitOperators(), sizeof(cotnode));
+		lp->~LinearParser();
+		mfree(lp);
+		mfree(pinn);
 		npu->GetNetwork()->func_free = ((_tofree_ft)(ReleaseTofreeCotlab<uni::Nnode>));
 		npu->Parse();
 		if (!npu->parsed) {
@@ -77,12 +80,16 @@ void Contask::Parse() {
 			cabort(filename, "Parse failed");
 			return;
 		}
+
 		if (!Link()) {
 			stage = STAGE_FAILED;
 			cabort(filename, "Linkage failed");
 			return;
 		}
 		stage = STAGE_PARSED;
+#ifdef _DEBUGX
+		PrintDebug(); puts("");
+#endif
 	}
 
 }
@@ -110,6 +117,7 @@ void cabort(const char* fname, const char* str) {
 	if (crtmsg) {
 		plogerro("%s (%s)", str, crtmsg);
 		memf(crtmsg);
-	} else plogerro(" %s", str);
+	}
+	else plogerro(" %s", str);
 }
 

@@ -1,4 +1,4 @@
-// ASCII CPP-14 TAB4 CRLF
+﻿// ASCII CPP-14 TAB4 CRLF
 // AllAuthor: @dosconio
 // ModuTitle: for linkage(built-in and outside) and execution
 // Copyright: Dosconio COTLAB, GNU-GPL Version 3
@@ -183,6 +183,7 @@ bool CotExecuate(uni::Nnode* inp, uni::NnodeChain* nc, uni::Nnode*& parencrt, Id
 			};
 			for (ncrt = crt->subf; ncrt; ncrt = ncrt->next)
 				f_io->Append(CotCopy(ncrt->addr, ncrt->type), false)->type = ncrt->type;
+			cotnode& refC = refCnode(crt);/// DBG
 			refCnode(crt).bind(f_io);
 			nc->Receive(crt, f_io);
 			delete (pureptr_t)f_io;//mfree(f_io);
@@ -196,7 +197,7 @@ bool CotExecuate(uni::Nnode* inp, uni::NnodeChain* nc, uni::Nnode*& parencrt, Id
 			nc->Remove(crt->subf);
 		}*/
 	}
-	
+
 	return true;
 }
 

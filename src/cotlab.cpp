@@ -1,4 +1,4 @@
-// ASCII CPP-14 TAB4 CRLF
+﻿// ASCII CPP-14 TAB4 CRLF
 // AllAuthor: @dosconio
 // ModuTitle: COTLAB Console
 // Copyright: Dosconio COTLAB, GNU-GPL Version 3
@@ -14,7 +14,7 @@
 char ulibver[16 + 1] = { "Not detected." };// from unisymlib
 uni::String uver_str(sliceof(ulibver));
 
-rostr ConMode[]{ "Shell", "File", "Command"};
+rostr ConMode[]{ "Shell", "File", "Command" };
 enum class option_t { SHELL, FILE, COMMAND };
 static option_t option{ option_t::SHELL };
 
@@ -23,12 +23,12 @@ static prompt_t prompt{ COTLAB_PROMPT_FULL };
 
 struct CotStrBuff : public uni::String {
 	CotStrBuff(stduint lenbuf = 0x1000) : String(lenbuf) { }
-	stduint getStdin() { 
+	stduint getStdin() {
 		return ConScanLine(addr, limits);
 	}
-	CotStrBuff& getEnv(const char* str) { 
+	CotStrBuff& getEnv(const char* str) {
 		StrCopy(addr, getenv(str));// self.String::operator=(getenv(str));
-		return self; 
+		return self;
 	}
 	CotStrBuff& getCwd() { (void)ConGetCurrentDirectory(addr, limits); return self; }
 	CotStrBuff& FormatPath() { // with suffix
@@ -73,7 +73,7 @@ int cotmain(int argc, char** argv) {
 	}
 	ploginfo("Library: %s", ulibver);
 	ploginfo("Mode   : %s", ConMode[_IMM(option)]);
-	
+
 	//{TODO} implemente Console in UNISYM
 
 	switch (option) {
@@ -110,10 +110,8 @@ int cotmain(int argc, char** argv) {
 		//{TODO} A single identifier which is not a valuable will be a calling
 		else {
 			Contask ctask(cbuff.reflect(), CONTASK_BUF, ic_list);//{TODO} task-pool and peculiar function
-			ctask.Prep(); 
-			//ctask.PrintDebug(); puts("");
+			ctask.Prep();
 			ctask.Parse();
-			//ctask.PrintDebug(); puts(""); 
 			_TEMP glb = &ctask;
 			if (ctask.Execute()) {
 				uni::Nnode* last = ctask.npu->GetNetwork()->Root();
