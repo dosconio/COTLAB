@@ -290,7 +290,7 @@ static void NnodePrint(const uni::Nnode* nnod, unsigned nest)
 	while (crt)
 	{
 		for0(i, nest) printf(i + 1 == _LIMIT ? "->" : "--");
-		printf("%d %d:", refCnode(crt).row, refCnode(crt).col);
+		//printf("%d %d:", refCnode(crt).row, refCnode(crt).col);
 		printtok(crt->offs, crt->type);
 		if (crt->subf) NnodePrint(crt->subf, nest + 1);
 		crt = crt->next;

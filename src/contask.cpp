@@ -5,6 +5,7 @@
 
 #include "../inc/cothead.h"
 #include "../inc/contask.h"
+#include <cpp/parse.hpp>
 #include <stdio.h>
 
 static char cotbuf[0x1000];
@@ -40,8 +41,12 @@ Contask::Contask(const char* fname, consrc_t srctyp, IdenChain* idens) {
 }
 
 Contask::~Contask() {
-	if ((stage == STAGE_EXECUTED || stage == STAGE_PARSED) || dc.Count())
+	if ((stage == STAGE_EXECUTED || stage == STAGE_PARSED || stage == STAGE_FAILED) || dc.Count())
+	{
 		npu->~NestedParseUnit();
+		npu->TokenOperatorGroupChain->~Chain();
+		mfree(npu->TokenOperatorGroupChain);
+	}
 	else {
 		if (lp) {
 			lp->~LinearParser();
@@ -58,35 +63,43 @@ void Contask::Prep() {
 	if (stage != STAGE_RAW) return;
 	stage = STAGE_PREPED; // tpm->TokenParse() ? STAGE_PREPED : STAGE_FAILED;
 	lp = new uni::LinearParser(*pinn);
+	lp->GHT = false;
+	lp->method_string_double_quote = true;
 	lp->Parse(dc);
-#ifdef _DEBUGX
-	for (auto i = dc.Root(); i; i = i->next) {
-		printf(">[%s]\t%s\n", tab_tokentype[i->type], i->addr);
-	}
-#endif
+	//#ifdef _DEBUGX
+	//	for (auto i = dc.Root(); i; i = i->next) {
+	//		printf(">[%s]\t%s\n", tab_tokentype[i->type], i->addr);
+	//	}
+	//#endif
 }
 
 void Contask::Parse() {
+	using namespace uni;
 	if (stage == STAGE_PREPED) {
+		LinearParser::RemoveComments(dc);
+		LinearParser::StringConcatenation(dc);
+		//{} directive process
 		npu = new uni::NestedParseUnit(dc, CotInitOperators(), sizeof(cotnode));
+		dc.~TnodeChain();
 		lp->~LinearParser();
 		mfree(lp);
 		mfree(pinn);
-		npu->GetNetwork()->func_free = ((_tofree_ft)(ReleaseTofreeCotlab<uni::Nnode>));
-		npu->Parse();
-		if (!npu->parsed) {
+		//
+		npu->GetNetwork()->func_free = NnodeHeapFreeSimple;
+		stage = STAGE_PARSED;
+		if (!npu->Parse()) {
 			stage = STAGE_FAILED;
 			crtcol = crtrow = 0; crtmsg = 0;
 			cabort(filename, "Parse failed");
 			return;
 		}
-
+		npu->GetNetwork()->func_free = ((_tofree_ft)(ReleaseTofreeCotlab<uni::Nnode>));
 		if (!Link()) {
 			stage = STAGE_FAILED;
 			cabort(filename, "Linkage failed");
 			return;
 		}
-		stage = STAGE_PARSED;
+
 #ifdef _DEBUGX
 		PrintDebug(); puts("");
 #endif
