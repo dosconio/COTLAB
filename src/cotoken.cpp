@@ -29,8 +29,8 @@ sufsub{ "--","SUFSUB" },
 \
 preadd{ "++","OP@PREADD" },
 presub{ "--","OP@@PRESUB" },
-preposi{ "+","OP@PREPOSI" },
-prenega{ "-","OP@PRENEGA" },
+preposi{ "+","OP@PREPOSI",OpPREPOSI },
+prenega{ "-","OP@PRENEGA",OpPRENEGA },
 prelognot{ "!","OP@LOGNOT" },
 prebitnot{ "~","OP@BITNOT" },
 prememb{ "*","OP@PREMEMB" },
@@ -274,7 +274,7 @@ static void printtok(pureptr_t addr, stduint typ, bool readonly = false) {
 	switch (typ)
 	{
 	case tok_number:
-		//printf("%lf", double(*(uni::Coe*)addr));
+		printf("%lf = ", double(*(uni::Coe*)addr));
 		printf("%s", uni::String(*(uni::Coe*)addr).reference());
 		break;
 	default:

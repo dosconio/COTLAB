@@ -79,7 +79,7 @@ void Contask::Parse() {
 		LinearParser::RemoveComments(dc);
 		LinearParser::StringConcatenation(dc);
 		//{} directive process
-		npu = new uni::NestedParseUnit(dc, CotInitOperators(), sizeof(cotnode));
+		npu = new uni::NestedParseUnit(dc, CotInitOperators(), sizeof(uni::mag_node_t));
 		dc.~TnodeChain();
 		lp->~LinearParser();
 		mfree(lp);

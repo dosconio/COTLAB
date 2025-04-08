@@ -66,6 +66,14 @@ FuncBasic(ASinh)
 FuncBasic(ACosh)
 FuncBasic(ATanh)
 
+void OpPREPOSI(uni::DnodeChain* io) { }
+void OpPRENEGA(uni::DnodeChain* io) {
+	if (io->Root()->type == tok_number) {
+		uni::Coe& coe_des = *(uni::Coe*)io->Root()->offs;
+		coe_des = -coe_des;
+	}
+}
+
 //
 
 extern "C" void erro(char* msg) {
@@ -85,38 +93,6 @@ builtin_func_t builtin_link[] = { FnSin, FnCos, FnTan, FnASin,FnACos,FnATan,FnSi
 };
 
 //
-
-// Bind Coe, Linkage, with error handling
-static bool StrTokenNestLinkage(uni::Nnode* inp, uni::NodeChain* togc) {
-	for (uni::Nnode* crt = inp; crt; crt = crt->next) {
-		if (crt->subf && !StrTokenNestLinkage(crt->subf, togc))
-			return false;
-		if (crt->type == tok_func) { // assert(crt->addr)
-			uni::Node* crtnod;
-			if (!StrCompareN(crt->addr, "OP@", 3)) if (crtnod = togc->Root()) do {
-				uni::TokenOperatorGroup* tmpopg = (uni::TokenOperatorGroup*)crtnod->offs;
-				uni::TokenOperator tmpop;
-				for0(i, tmpopg->count) {
-					if ((tmpop = tmpopg->operators[i]).ident && !StrCompare(tmpop.ident, crt->addr)) {
-						refCnode(crt).bind = tmpop.bindfn;
-						break;
-					}
-				}
-			} while (crtnod = crtnod->next); else;
-			else for0(i, numsof(builtin_iden)) if (builtin_iden[i] && !StrCompare(builtin_iden[i], crt->addr)) {
-				refCnode(crt).bind = builtin_link[i];
-				break;
-			}
-			if (!refCnode(crt).bind) {
-				crtrow = refCnode(crt).row;
-				crtcol = refCnode(crt).col; // -(crt->addr ? StrLength(crt->addr) : 0);
-				crtmsg = StrHeap(crt->addr);
-				return false;
-			}
-		}
-	}
-	return true;
-}
 
 
 static void LinkNumber(uni::Nnode* inp, uni::NodeChain* togc) {
@@ -164,7 +140,7 @@ bool Contask::Link() {
 		return state;
 	}
 	//{TODO} There is a memleak
-	return StrTokenNestLinkage(this->npu->GetNetwork()->Root(), this->npu->TokenOperatorGroupChain) && state;
+	return state;
 }
 
 bool CotExecuate(uni::Nnode* inp, uni::NnodeChain* nc, uni::Nnode*& parencrt, IdenChain* list_sens) {
@@ -190,7 +166,7 @@ bool CotExecuate(uni::Nnode* inp, uni::NnodeChain* nc, uni::Nnode*& parencrt, Id
 			};
 			for (ncrt = crt->subf; ncrt; ncrt = ncrt->next)
 				f_io->Append(CotCopy(ncrt->addr, ncrt->type), false)->type = ncrt->type;
-			cotnode& refC = refCnode(crt);/// DBG
+			uni::mag_node_t& refC = refCnode(crt);/// DBG
 			refCnode(crt).bind(f_io);
 			nc->Receive(crt, f_io);
 			delete (pureptr_t)f_io;//mfree(f_io);

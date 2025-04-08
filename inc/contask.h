@@ -58,16 +58,8 @@ public:
 	uni::Tnode* tpmRoot() { return (uni::Tnode*)dc.Root(); }
 };
 
-struct cotnode {
-	// same with tnode
-	stduint row;
-	stduint col;
-	//
-	uni::_tok_bindfunc_t bind;
-};
-
-inline cotnode& refCnode(uni::Nnode* nod) {
-	return *(cotnode*)(nod->GetExtnField());
+inline uni::mag_node_t& refCnode(uni::Nnode* nod) {
+	return *(uni::mag_node_t*)(nod->GetExtnField());
 }
 
 #endif // _INC_CONTASK

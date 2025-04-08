@@ -1,4 +1,4 @@
-
+﻿
 #ifndef __COTHEAD
 #define __COTHEAD
 
@@ -101,6 +101,8 @@ void OpARIMUL(uni::DnodeChain* io);
 void OpARIDIV(uni::DnodeChain* io);
 void OpARIADD(uni::DnodeChain* io);
 void OpARISUB(uni::DnodeChain* io);
+void OpPREPOSI(uni::DnodeChain* io);
+void OpPRENEGA(uni::DnodeChain* io);
 void FnSin(uni::DnodeChain* io);
 void FnCos(uni::DnodeChain* io);
 void FnTan(uni::DnodeChain* io);
@@ -113,6 +115,7 @@ void FnTanh(uni::DnodeChain* io);
 void FnASinh(uni::DnodeChain* io);
 void FnACosh(uni::DnodeChain* io);
 void FnATanh(uni::DnodeChain* io);
+
 
 // contask.cpp
 extern void cabort(const char* fname, const char* str);
