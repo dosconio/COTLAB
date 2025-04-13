@@ -96,13 +96,23 @@ extern stduint crtrow, crtcol;
 extern char* crtmsg;
 void* CotCopy(void* inp, stduint typ);
 bool CotExecuate(uni::Nnode* inp, uni::NnodeChain* nc, uni::Nnode*& parencrt, IdenChain* list_sens);
+void OpPREPOSI(uni::DnodeChain* io);
+void OpPRENEGA(uni::DnodeChain* io);
+
 void OpARIPOW(uni::DnodeChain* io);
 void OpARIMUL(uni::DnodeChain* io);
 void OpARIDIV(uni::DnodeChain* io);
 void OpARIADD(uni::DnodeChain* io);
 void OpARISUB(uni::DnodeChain* io);
-void OpPREPOSI(uni::DnodeChain* io);
-void OpPRENEGA(uni::DnodeChain* io);
+
+void OpJBELOW(uni::DnodeChain* io);
+void OpJBEEQU(uni::DnodeChain* io);
+void OpJGREAT(uni::DnodeChain* io);
+void OpJGREQU(uni::DnodeChain* io);
+
+void OpJEQUAL(uni::DnodeChain* io);
+void OpJNOTEQ(uni::DnodeChain* io);
+
 void FnSin(uni::DnodeChain* io);
 void FnCos(uni::DnodeChain* io);
 void FnTan(uni::DnodeChain* io);

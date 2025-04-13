@@ -49,13 +49,13 @@ arisub{ "-","OP@ARISUB",OpARISUB },
 bitshl{ "<<","OP@BITSHL" },
 bitshr{ ">>","OP@BITSHR" },
 \
-jbelow{ "<","OP@JBELOW" },
-jbeequ{ "<=","OP@JBEEQU" },
-jgreat{ ">","OP@JGREAT" },
-jgrequ{ ">=","OP@JGREQU" },
+jbelow{ "<" ,"OP@JBELOW",OpJBELOW },
+jbeequ{ "<=","OP@JBEEQU",OpJBEEQU },
+jgreat{ ">" ,"OP@JGREAT",OpJGREAT },
+jgrequ{ ">=","OP@JGREQU",OpJGREQU },
 \
-jequal{ "==","OP@JEQUAL" },
-jnoteq{ "!=","OP@JNOTEQ" },
+jequal{ "==","OP@JEQUAL",OpJEQUAL },
+jnoteq{ "~=","OP@JNOTEQ",OpJNOTEQ },// not != for "! is for factorial"
 \
 bit_and{ "&","OP@BITAND" },
 \

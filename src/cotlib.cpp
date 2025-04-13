@@ -22,7 +22,20 @@ extern pureptr_t glb;
 }
 
 FuncOp2(ARIPOW, ^=)
-FuncOp2(ARIMUL, *=)
+void OpARIMUL(uni::DnodeChain* io) {
+	uni::Dnode* first = io->Root();
+	if (!first->next || io->Count() != 2) return;
+	uni::Dnode* second = first->next;
+	if (first->type == tok_number && second->type == tok_number) {
+		uni::Coe& coe_des = *(uni::Coe*)first->offs;
+		uni::Coe& coe_src = *(uni::Coe*)second->offs;
+		coe_des *= coe_src;
+		io->Remove(second);
+	}
+	//else if (first->type == tok_string && second->type == tok_number) {
+
+	//}
+}
 FuncOp2(ARIDIV, /=)
 void OpARIADD(uni::DnodeChain* io) {
 	uni::Dnode* first = io->Root();
@@ -74,6 +87,89 @@ void OpPRENEGA(uni::DnodeChain* io) {
 	}
 }
 
+
+void OpJBELOW(uni::DnodeChain* io) {
+	uni::Dnode* first = io->Root();
+	if (!first->next || io->Count() != 2) return;
+	uni::Dnode* second = first->next;
+	if (first->type == tok_number && second->type == tok_number) {
+		uni::Coe& coe_des = *(uni::Coe*)first->offs;
+		uni::Coe& coe_src = *(uni::Coe*)second->offs;
+		coe_des = coe_des < coe_src;
+		io->Remove(second);
+	}
+}
+void OpJBEEQU(uni::DnodeChain* io) {
+	uni::Dnode* first = io->Root();
+	if (!first->next || io->Count() != 2) return;
+	uni::Dnode* second = first->next;
+	if (first->type == tok_number && second->type == tok_number) {
+		uni::Coe& coe_des = *(uni::Coe*)first->offs;
+		uni::Coe& coe_src = *(uni::Coe*)second->offs;
+		coe_des = coe_des <= coe_src;
+		io->Remove(second);
+	}
+}
+void OpJGREAT(uni::DnodeChain* io) {
+	uni::Dnode* first = io->Root();
+	if (!first->next || io->Count() != 2) return;
+	uni::Dnode* second = first->next;
+	if (first->type == tok_number && second->type == tok_number) {
+		uni::Coe& coe_des = *(uni::Coe*)first->offs;
+		uni::Coe& coe_src = *(uni::Coe*)second->offs;
+		coe_des = coe_des > coe_src;
+		io->Remove(second);
+	}
+}
+void OpJGREQU(uni::DnodeChain* io) {
+	uni::Dnode* first = io->Root();
+	if (!first->next || io->Count() != 2) return;
+	uni::Dnode* second = first->next;
+	if (first->type == tok_number && second->type == tok_number) {
+		uni::Coe& coe_des = *(uni::Coe*)first->offs;
+		uni::Coe& coe_src = *(uni::Coe*)second->offs;
+		coe_des = coe_des >= coe_src;
+		io->Remove(second);
+	}
+}
+
+
+void OpJEQUAL(uni::DnodeChain* io) {
+	uni::Dnode* first = io->Root();
+	if (!first->next || io->Count() != 2) return;
+	uni::Dnode* second = first->next;
+	if (first->type == tok_number && second->type == tok_number) {
+		uni::Coe& coe_des = *(uni::Coe*)first->offs;
+		uni::Coe& coe_src = *(uni::Coe*)second->offs;
+		coe_des = coe_des == coe_src;
+		io->Remove(second);
+	}
+	else if (first->type == tok_string && second->type == tok_string) {//{} To Bool
+		srs(first->offs, new uni::Coe(!StrCompare(first->addr, second->addr)));
+		first->type = tok_number;
+		io->Remove(second);
+	}
+}
+void OpJNOTEQ(uni::DnodeChain* io) {
+	uni::Dnode* first = io->Root();
+	if (!first->next || io->Count() != 2) return;
+	uni::Dnode* second = first->next;
+	if (first->type == tok_number && second->type == tok_number) {
+		uni::Coe& coe_des = *(uni::Coe*)first->offs;
+		uni::Coe& coe_src = *(uni::Coe*)second->offs;
+		coe_des = coe_des != coe_src;
+		io->Remove(second);
+	}
+	else if (first->type == tok_string && second->type == tok_string) {//{} To Bool
+		srs(first->offs, new uni::Coe(!!StrCompare(first->addr, second->addr)));
+		first->type = tok_number;
+		io->Remove(second);
+	}
+}
+
+
+
+
 //
 
 extern "C" void erro(char* msg) {
@@ -93,7 +189,25 @@ builtin_func_t builtin_link[] = { FnSin, FnCos, FnTan, FnASin,FnACos,FnATan,FnSi
 };
 
 //
-
+static bool StrTokenNestLinkage(uni::Nnode* inp, uni::NodeChain* togc) {
+	for (uni::Nnode* crt = inp; crt; crt = crt->next) {
+		if (crt->subf && !StrTokenNestLinkage(crt->subf, togc))
+			return false;
+		if (crt->type == tok_func && !refCnode(crt).bind && crt->addr) {
+			for0(i, numsof(builtin_iden)) if (builtin_iden[i] && !StrCompare(builtin_iden[i], crt->addr)) {
+				refCnode(crt).bind = builtin_link[i];
+				break;
+			}
+			if (!refCnode(crt).bind) {
+				crtrow = refCnode(crt).row;
+				crtcol = refCnode(crt).col; // -(crt->addr ? StrLength(crt->addr) : 0);
+				crtmsg = StrHeap(crt->addr);
+				return false;
+			}
+		}
+	}
+	return true;
+}
 
 static void LinkNumber(uni::Nnode* inp, uni::NodeChain* togc) {
 	for (uni::Nnode* crt = inp; crt; crt = crt->next) {
@@ -133,14 +247,10 @@ bool Contask::Link() {
 	// Link
 	if (!state)
 	{
-		//#ifdef _DEBUGX
-		//		PrintDebug(); puts("");
-		//#endif
 		this->npu->~NestedParseUnit();
 		return state;
 	}
-	//{TODO} There is a memleak
-	return state;
+	return StrTokenNestLinkage(this->npu->GetNetwork()->Root(), this->npu->TokenOperatorGroupChain) && state;
 }
 
 bool CotExecuate(uni::Nnode* inp, uni::NnodeChain* nc, uni::Nnode*& parencrt, IdenChain* list_sens) {
