@@ -58,8 +58,6 @@ public:
 	uni::Tnode* tpmRoot() { return (uni::Tnode*)dc.Root(); }
 };
 
-inline uni::mag_node_t& refCnode(uni::Nnode* nod) {
-	return *(uni::mag_node_t*)(nod->GetExtnField());
-}
+
 
 #endif // _INC_CONTASK

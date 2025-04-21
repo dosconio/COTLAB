@@ -11,7 +11,7 @@
 
 #define CotTitle "COTLAB Console Build " __DATE__
 
-char ulibver[16 + 1] = { "Not detected." };// from unisymlib
+char ulibver[] = { "Not detected." };// from unisymlib
 uni::String uver_str(sliceof(ulibver));
 
 rostr ConMode[]{ "Shell", "File", "Command" };
@@ -56,7 +56,10 @@ int cotmain(int argc, char** argv) {
 	{
 		cbuff.getEnv("ulibpath").FormatPath() += "Script/Cotoba/version";
 		HostFile verfile(cbuff.reference());
-		if (bool(verfile)) verfile >> uver_str;
+		if (bool(verfile)) {
+			uver_str.Clear();
+			verfile >> uver_str;
+		}
 	}
 	for (stduint i = 1; i < argc; i++) {
 		if (argv[i][0] == '-') switch (argv[i][1]) {
@@ -72,7 +75,7 @@ int cotmain(int argc, char** argv) {
 		}
 	}
 	ploginfo("Library: %s", ulibver);
-	ploginfo("Mode   : %s", ConMode[_IMM(option)]);
+	// ploginfo("Mode   : %s", ConMode[_IMM(option)]);
 
 	//{TODO} implemente Console in UNISYM
 

@@ -297,6 +297,21 @@ static void NnodePrint(const uni::Nnode* nnod, unsigned nest)
 	}
 }
 
+void NnodePrintPrelink(const uni::Nnode* nnod, unsigned nest)
+{
+	uni::Nnode* crt = (uni::Nnode*)nnod;
+	while (crt)
+	{
+		for0(i, nest) printf(i + 1 == _LIMIT ? "->" : "--");
+		printf("%u %u:", crt->GetMagnoField().row, crt->GetMagnoField().col);;
+		printf("[%s] ", tab_tokentype[crt->type]);
+		if (crt->type != tok_number) printf("%s", crt->addr);
+		puts("");
+		if (crt->subf) NnodePrintPrelink(crt->subf, nest + 1);
+		crt = crt->next;
+	}
+}
+
 void Contask::PrintDebug() {
 	// linear token
 	if (stage == STAGE_FAILED) return;

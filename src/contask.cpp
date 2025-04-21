@@ -96,6 +96,8 @@ void Contask::Parse() {
 		npu->GetNetwork()->func_free = ((_tofree_ft)(ReleaseTofreeCotlab<uni::Nnode>));
 		if (!Link()) {
 			stage = STAGE_FAILED;
+			void NnodePrintPrelink(const uni::Nnode * nnod, unsigned nest);
+			if (npu->GetNetwork()) NnodePrintPrelink(npu->GetNetwork()->Root(), 0);
 			cabort(filename, "Linkage failed");
 			return;
 		}
@@ -129,7 +131,7 @@ void cabort(const char* fname, const char* str) {
 	crtcol = 0; crtrow = 0;
 	if (crtmsg) {
 		plogerro("%s (%s)", str, crtmsg);
-		memf(crtmsg);
+		mfree(crtmsg);
 	}
 	else plogerro(" %s", str);
 }

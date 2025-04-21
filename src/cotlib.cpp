@@ -193,14 +193,14 @@ static bool StrTokenNestLinkage(uni::Nnode* inp, uni::NodeChain* togc) {
 	for (uni::Nnode* crt = inp; crt; crt = crt->next) {
 		if (crt->subf && !StrTokenNestLinkage(crt->subf, togc))
 			return false;
-		if (crt->type == tok_func && !refCnode(crt).bind && crt->addr) {
+		if (crt->type == tok_func && !crt->GetMagnoField().bind && crt->addr) {
 			for0(i, numsof(builtin_iden)) if (builtin_iden[i] && !StrCompare(builtin_iden[i], crt->addr)) {
-				refCnode(crt).bind = builtin_link[i];
+				crt->GetMagnoField().bind = builtin_link[i];
 				break;
 			}
-			if (!refCnode(crt).bind) {
-				crtrow = refCnode(crt).row;
-				crtcol = refCnode(crt).col; // -(crt->addr ? StrLength(crt->addr) : 0);
+			if (!crt->GetMagnoField().bind) {
+				crtrow = crt->GetMagnoField().row;
+				crtcol = crt->GetMagnoField().col; // -(crt->addr ? StrLength(crt->addr) : 0);
 				crtmsg = StrHeap(crt->addr);
 				return false;
 			}
@@ -239,8 +239,8 @@ bool Contask::Link() {
 	bool state = true;
 	// Check that each line only has one item;
 	uni::Nnode* crtnes = this->npu->GetNetwork()->Root();
-	if (crtnes && (crtnes = crtnes->next)) do if (refCnode(crtnes).row == refCnode(crtnes->left).row) {
-		crtrow = refCnode(crtnes).row, crtcol = refCnode(crtnes).col; // -(crtnes->addr ? StrLength(crtnes->addr) : 0);
+	if (crtnes && (crtnes = crtnes->next)) do if (crtnes->GetMagnoField().row == crtnes->left->GetMagnoField().row) {
+		crtrow = crtnes->GetMagnoField().row, crtcol = crtnes->GetMagnoField().col; // -(crtnes->addr ? StrLength(crtnes->addr) : 0);
 		state = false;
 	} while (crtnes = crtnes->next);
 	LinkNumber(this->npu->GetNetwork()->Root(), this->npu->TokenOperatorGroupChain);
@@ -258,16 +258,16 @@ bool CotExecuate(uni::Nnode* inp, uni::NnodeChain* nc, uni::Nnode*& parencrt, Id
 	for (uni::Nnode* crt = inp; crt; crt && (crt = crt->next)) {
 		if (crt->subf && !CotExecuate(crt->subf, nc, crt, list_sens)) return false;
 		if (crt->type == tok_any) continue;
-		if (crt->type == tok_identy && !refCnode(crt).bind && !crt->subf && crt->addr) {
+		if (crt->type == tok_identy && !crt->GetMagnoField().bind && !crt->subf && crt->addr) {
 			if (list_sens && (inod = list_sens[0][crt->addr])) {
 				srs(crt->offs, CotCopy(inod->offs, crt->type = inod->type));
 			}
 			else for0(i, numsof(builtin_iden)) {
 				if (builtin_iden[i] && !StrCompare(builtin_iden[i], crt->addr))
-					refCnode(crt).bind = builtin_link[i];
+					crt->GetMagnoField().bind = builtin_link[i];
 			}
 		}
-		if (refCnode(crt).bind) {
+		if (crt->GetMagnoField().bind) {
 			uni::DnodeChain* f_io = new uni::DnodeChain();
 			f_io->func_free = ((_tofree_ft)(ReleaseTofreeCotlab<uni::Dnode>));
 			union {
@@ -276,8 +276,7 @@ bool CotExecuate(uni::Nnode* inp, uni::NnodeChain* nc, uni::Nnode*& parencrt, Id
 			};
 			for (ncrt = crt->subf; ncrt; ncrt = ncrt->next)
 				f_io->Append(CotCopy(ncrt->addr, ncrt->type), false)->type = ncrt->type;
-			uni::mag_node_t& refC = refCnode(crt);/// DBG
-			refCnode(crt).bind(f_io);
+			crt->GetMagnoField().bind(f_io);
 			nc->Receive(crt, f_io);
 			delete (pureptr_t)f_io;//mfree(f_io);
 			crt = nc->Remove(ncrt = crt);
