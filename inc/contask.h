@@ -55,7 +55,7 @@ public:
 		if (stage == STAGE_PARSED) Execute();
 	}
 	void PrintDebug();
-	uni::Tnode* tpmRoot() { return (uni::Tnode*)dc.Root(); }
+
 };
 
 

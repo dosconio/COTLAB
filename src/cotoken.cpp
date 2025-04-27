@@ -283,33 +283,21 @@ static void printtok(pureptr_t addr, stduint typ, bool readonly = false) {
 	}
 	puts("");
 }
-
-static void NnodePrint(const uni::Nnode* nnod, unsigned nest)
-{
-	uni::Nnode* crt = (uni::Nnode*)nnod;
-	while (crt)
-	{
-		for0(i, nest) printf(i + 1 == _LIMIT ? "->" : "--");
-		//printf("%d %d:", refCnode(crt).row, refCnode(crt).col);
-		printtok(crt->offs, crt->type);
-		if (crt->subf) NnodePrint(crt->subf, nest + 1);
-		crt = crt->next;
-	}
+static void printtok2(uni::Nnode& nod, stduint nest) {
+	pureptr_t addr = nod.addr;
+	stduint typ = nod.type;
+	bool readonly = false;
+	for0(i, nest) printf(i + 1 == _LIMIT ? "->" : "--");
+	printtok(nod.addr, nod.type, false);
 }
 
-void NnodePrintPrelink(const uni::Nnode* nnod, unsigned nest)
+void NnodePrintPrelink(uni::Nnode& nnod, stduint nest)
 {
-	uni::Nnode* crt = (uni::Nnode*)nnod;
-	while (crt)
-	{
-		for0(i, nest) printf(i + 1 == _LIMIT ? "->" : "--");
-		printf("%u %u:", crt->GetMagnoField().row, crt->GetMagnoField().col);;
-		printf("[%s] ", tab_tokentype[crt->type]);
-		if (crt->type != tok_number) printf("%s", crt->addr);
-		puts("");
-		if (crt->subf) NnodePrintPrelink(crt->subf, nest + 1);
-		crt = crt->next;
-	}
+	for0(i, nest) printf(i + 1 == _LIMIT ? "->" : "--");
+	printf("%u %u:", nnod.GetMagnoField().row, nnod.GetMagnoField().col);;
+	printf("[%s] ", tab_tokentype[nnod.type]);
+	if (nnod.type != tok_number) printf("%s", nnod.addr);
+	puts("");
 }
 
 void Contask::PrintDebug() {
@@ -317,17 +305,8 @@ void Contask::PrintDebug() {
 	if (stage == STAGE_FAILED) return;
 	if (stage == STAGE_PREPED || stage == STAGE_PARSED || stage == STAGE_EXECUTED || (stage == STAGE_FAILED && npu && npu->GetNetwork()->Root())); else
 		return;
-	if (stage == STAGE_PREPED) {
-		uni::Tnode* crttn = tpmRoot();
-		if (!crttn->next) return;
-		crttn = crttn->next;
-		while (crttn) {
-			printtok(crttn->offs, crttn->type);
-			crttn = crttn->next;
-		}
-	}
-	else if (npu && npu->GetNetwork())
-		NnodePrint(npu->GetNetwork()->Root(), 0);
+	if (stage == STAGE_PREPED);
+	else if (npu && npu->GetNetwork()) npu->GetNetwork()->Traversal(printtok2);
 }
 
 void InodePrint(IdenChain* ic) {

@@ -96,8 +96,8 @@ void Contask::Parse() {
 		npu->GetNetwork()->func_free = ((_tofree_ft)(ReleaseTofreeCotlab<uni::Nnode>));
 		if (!Link()) {
 			stage = STAGE_FAILED;
-			void NnodePrintPrelink(const uni::Nnode * nnod, unsigned nest);
-			if (npu->GetNetwork()) NnodePrintPrelink(npu->GetNetwork()->Root(), 0);
+			void NnodePrintPrelink(uni::Nnode & nnod, stduint nest);
+			if (npu->GetNetwork()) npu->GetNetwork()->Traversal(NnodePrintPrelink);
 			cabort(filename, "Linkage failed");
 			return;
 		}
