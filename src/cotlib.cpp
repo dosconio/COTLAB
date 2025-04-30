@@ -267,6 +267,11 @@ bool CotExecuate(uni::Nnode* inp, uni::NnodeChain* nc, uni::Nnode*& parencrt, Id
 					crt->GetMagnoField().bind = builtin_link[i];
 			}
 		}
+		if (crt->type == tok_func && !crt->addr && crt->subf && !crt->subf->next) {
+			crt->offs = CotCopy(crt->subf->addr, crt->subf->type);
+			crt->type = crt->subf->type;
+			nc->Remove(crt->subf);
+		}
 		if (crt->GetMagnoField().bind) {
 			uni::DnodeChain* f_io = new uni::DnodeChain();
 			f_io->func_free = ((_tofree_ft)(ReleaseTofreeCotlab<uni::Dnode>));
@@ -282,12 +287,6 @@ bool CotExecuate(uni::Nnode* inp, uni::NnodeChain* nc, uni::Nnode*& parencrt, Id
 			crt = nc->Remove(ncrt = crt);
 			if (parencrt == ncrt) parencrt = crt;
 		}
-		/*
-		else if (crt->subf && !crt->subf->next) {
-			crt->offs = CotCopy(crt->subf->addr, crt->subf->type);
-			crt->type = crt->subf->type;
-			nc->Remove(crt->subf);
-		}*/
 	}
 
 	return true;
