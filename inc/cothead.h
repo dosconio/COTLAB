@@ -96,6 +96,9 @@ extern stduint crtrow, crtcol;
 extern char* crtmsg;
 void* CotCopy(void* inp, stduint typ);
 bool CotExecuate(uni::Nnode* inp, uni::NnodeChain* nc, uni::Nnode*& parencrt, IdenChain* list_sens);
+
+void OpFACTORIAL(uni::DnodeChain* io);
+
 void OpPREPOSI(uni::DnodeChain* io);
 void OpPRENEGA(uni::DnodeChain* io);
 

@@ -79,7 +79,19 @@ FuncBasic(ASinh)
 FuncBasic(ACosh)
 FuncBasic(ATanh)
 
-void OpPREPOSI(uni::DnodeChain* io) { }
+void OpFACTORIAL(uni::DnodeChain* io) {
+	uni::Dnode* first = io->Root();
+	if (!first || io->Count() != 1) {
+		return;//{}
+	}
+	if (first->type == tok_number) {
+		//{} Integer Judgement
+		uni::Coe& coe_des = *(uni::Coe*)first->offs;
+		coe_des = dblfactorial(coe_des);
+	}
+}
+
+void OpPREPOSI(uni::DnodeChain* io) {}
 void OpPRENEGA(uni::DnodeChain* io) {
 	if (io->Root()->type == tok_number) {
 		uni::Coe& coe_des = *(uni::Coe*)io->Root()->offs;

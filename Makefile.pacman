@@ -1,0 +1,21 @@
+pkgname=cot
+pkgver=0.0.2.0
+pkgrel=1 # Arch的修订号，从1开始
+pkgdesc="shell"
+arch=('x86_64')  # 适用的架构，如x86_64、i686
+url="https://doscon.io"
+license=('GPL') # 例如 GPL、MIT、custom（自定义）
+
+depends=()
+conflicts=()
+provides=()
+
+source=(
+    "cot"
+)
+md5sums=('SKIP')
+
+package() {
+    install -d "$pkgdir/usr/bin"
+    install -Dm755 "cot" -t "$pkgdir/usr/bin/"
+}

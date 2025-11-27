@@ -21,7 +21,7 @@ const char* tab_tokentype[] =
 uni::TokenOperator // Builtin Prefix "OP@"
 sufmem{ ".","SUFMEMB" },
 \
-arfact{ "!","ARIFACT" },
+arfact{ "!","ARIFACT",OpFACTORIAL },
 sufadd{ "++","SUFADD" },
 sufsub{ "--","SUFSUB" },
 // {cancelled} sufme2{ "->","SUFMEMB" },

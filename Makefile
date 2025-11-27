@@ -8,6 +8,8 @@ cxxdef = -D_DEBUG -D_PROPERTY_STRING_OFF
 CX32 = g++ -m32 -s -O3 -I$(uincpath) -L$(ubinpath) $(cxxdef) -static -D_Linux32
 CX64 = g++ -m64 -s -O3 -I$(uincpath) -L$(ubinpath) $(cxxdef) -static -D_Linux64
 
+dir_pacman=./.pacman/cot
+
 .PHONY: lin64 lin32 win32 debian
 
 #{TODO} make PPA of unisym and rely on it. Now is only for 64
@@ -21,6 +23,8 @@ lin32:
 win64:
 	windres -i ./inc/resources.rc -o ../_obj/cotres.obj
 	${CX32} -D_Win64 $(builds) ../_obj/cotres.obj -I$(udir_win)/inc -L$(ubinpath) -lw64d -o $(ubinpath)/cot.exe -w -m64
+
+# Debian-Package System
 
 debian: 
 	-rm -rf .deb
@@ -47,6 +51,10 @@ debtest:
 debrelease:
 	cd .deb && dput ppa:dosconio/cot *.changes
 
-
-
+# ArchLinux AUR
+archl:
+	mkdir -p $(dir_pacman)
+	cp Makefile.pacman $(dir_pacman)/PKGBUILD
+	${CX64}  $(builds) -ll64d -o $(dir_pacman)/cot $(warns)
+	cd $(dir_pacman) && makepkg -f # -s -c -r
 
