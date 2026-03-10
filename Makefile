@@ -21,8 +21,8 @@ lin32:
 	sudo ${CX32}  $(builds) -ll32d -o /usr/bin/cot $(warns)
 
 win64:
-	windres -i ./inc/resources.rc -o ../_obj/cotres.obj
-	${CX32} -D_Win64 $(builds) ../_obj/cotres.obj -I$(udir_win)/inc -L$(ubinpath) -lw64d -o $(ubinpath)/cot.exe -w -m64
+	windres -i ./inc/resources.rc -o $(uobjpath)/cotres.obj
+	${CX32} -D_Win64 $(builds) $(uobjpath)/cotres.obj -I$(udir_win)/inc -L$(ubinpath) -lw64d -o $(ubinpath)/AMD64/Win64/cot.exe -w -m64
 
 # Debian-Package System
 

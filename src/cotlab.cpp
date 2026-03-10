@@ -5,6 +5,10 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 
+#include <cpp/unisym>
+
+#if !defined(_ARINUX) && !defined(_MCCA)
+
 #include <c/file.h>
 #include "../inc/cothead.h"
 #include "../inc/contask.h"
@@ -154,3 +158,133 @@ void entry() {
 	//TEMP for Mecocoa and other free-standing environments
 	cotmain(0, 0);
 }
+
+#endif
+
+#ifdef _ARINUX
+#include <unistd.h>
+#include <sys/wait.h>
+
+_ESYM_C
+int _m_waitid(idtype_t idtype, id_t id, siginfo_t *infop, int options, void* rusage);
+
+int main() {
+	char command[256];
+	while (true) {
+		write(1, "# ", sizeof("# ") - 1);// man 2 write
+		int count = read(0 _Comment(stdin), command, 255);// man 2 read
+		// replace \n into \0
+		command[count - 1] = 0;
+		pid_t fork_result = fork();
+		if (fork_result) {
+			// wait children to avoid zombie process
+			siginfo_t siginfo;
+			_m_waitid(P_ALL, nil, &siginfo, WEXITED, NULL);
+		}
+		else {
+			execve(command, 0, 0);//{} retval?
+			break;
+		}
+	}
+	_exit(0);
+}
+
+#elif defined(_MCCA)
+
+#include "inc/aaaaa.h"
+#include "cpp/queue"
+
+#define EXIT_CODE 0x123
+char inbuf[128];
+char* argv[25];
+
+int run(char* cmd)
+{
+	sysouts("torun: ");
+	sysouts(inbuf);
+	sysouts("\n\r");
+	// //
+	char* p = cmd;
+	char* s;
+	int word = 0, argc = 0;
+	char ch;
+	do {
+		ch = *p++;
+		if (*p != ' ' && *p && !word) {
+			s = p;
+			word = 1;
+		}
+		if ((*p == ' ' || !*p) && word) {
+			word = 0;
+			argv[argc++] = s;
+			*p = 0;
+		}
+		if (argc >= numsof(argv)) break;
+	} while (ch);
+	argv[argc] = 0;
+	//
+	//int fd = open(argv[0], O_RDWR);
+	//if (fd == -1) { return -1; }
+	//	close(fd); fd = 0;
+	//	if (fork()) {
+	//		int s;
+	//		wait(&s);
+	//	}
+	//	else execv(argv[0], argv);
+	//
+	return _TEMP 0;
+}
+
+int main(int argc, char** argv)
+{
+	int fd_inn = sysopen("/dev_tty0");// should-be 0
+	int fd_out = sysopen("/dev_tty0");// should-be 1
+	int pid = fork();
+	if (pid) {
+		sysouts("[Appinit] There is the parent.\n\r");
+		int s;
+		while (true) {
+			int child = wait(&s);
+			if (s == EXIT_CODE) {
+				sysouts("[Appinit] The child exited with EXIT_CODE.\n\r");
+				s = nil;
+			}
+			else {
+				sysouts("[Appinit] The child exited without EXIT_CODE.\n\r");
+				s = nil;
+			}
+			sysrest();
+		}
+	}
+	else { // here is the shell (primitive COTLAB)
+		uni::QueueLimited queue((uni::Slice) { _IMM(inbuf), sizeof(inbuf) });
+		char outbuf[2] = { 0 };
+		sysouts("[Appinit] Init SHell started.\n\r");
+		// if (pid = fork()); else sysouts("[appinit] There is the child's child.\n\r");
+		while (true) {
+			if ((outbuf[0] = sysinnc()) > 0) {
+				if (outbuf[0] == '\n') {
+					sysouts("\n\r");// run new proc
+					queue.out(&outbuf[1], 1);
+					run(inbuf);
+					queue.clear();
+				}
+				else if (outbuf[0] == '\b') {
+					sysouts("\b \b");
+					if (!queue.is_empty()) {
+						queue.p--;
+					}
+				}
+				else {
+					sysouts(outbuf);
+					queue.out(outbuf, 1);
+				}
+			}
+		}
+		//{TODO} exit(EXIT_CODE);
+	}
+	while (1) sysrest();//{TODO} exit()
+}
+
+#endif
+

@@ -184,7 +184,7 @@ void OpJNOTEQ(uni::DnodeChain* io) {
 
 //
 
-extern "C" void erro(char* msg) {
+void erro(const char* msg) {
 	//...
 }
 

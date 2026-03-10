@@ -2,8 +2,6 @@
 #ifndef __COTHEAD
 #define __COTHEAD
 
-extern "C" int abs(int);
-
 #include <cpp/basic>
 #include <cpp/nodes>
 #include <c/mnode.h>
