@@ -252,18 +252,6 @@ void CotReleaseInode(pureptr_t offs) {
 	mfree(obj->type);// the identifier text in heap
 }
 
-// ---- ---- ---- ---- Iden Chain ---- ---- ---- ----
-
-
-IdenChain::IdenChain() : chn() {
-	chn.func_comp = (_tocomp_ft)StrCompare;
-	chn.refChain().func_free = CotReleaseInode;
-}
-
-IdenChain::~IdenChain() {
-
-}
-
 // ---- ---- ---- ---- Print ---- ---- ---- ----
 
 static void printtok(pureptr_t addr, stduint typ, bool readonly = false) {

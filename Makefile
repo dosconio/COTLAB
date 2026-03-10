@@ -3,7 +3,7 @@ VERS  =0.0.2.0
 
 builds = ./src/*.cpp
 warns = -Wno-unused-result -w
-cxxdef = -D_DEBUG -D_PROPERTY_STRING_OFF
+cxxdef = -D_DEBUG
 
 CX32 = g++ -m32 -s -O3 -I$(uincpath) -L$(ubinpath) $(cxxdef) -static -D_Linux32
 CX64 = g++ -m64 -s -O3 -I$(uincpath) -L$(ubinpath) $(cxxdef) -static -D_Linux64

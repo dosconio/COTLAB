@@ -50,6 +50,9 @@ int cotmain(int argc, char** argv) {
 	using namespace uni;
 
 	IdenChain ic_list[3];
+	for0a(i, ic_list) {
+		ic_list[i].chn.refChain().func_free = CotReleaseInode;
+	}
 	IdenChain& ic_mac = ic_list[0], & ic_sen = ic_list[1], & ic_ise = ic_list[2];
 
 	ic_sen.Modify("last", new Coe(0.0), dt_float, true);
