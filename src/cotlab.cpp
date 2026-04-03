@@ -203,9 +203,7 @@ char* argv[25];
 
 int run(char* cmd)
 {
-	sysouts("torun: ");
-	sysouts(inbuf);
-	sysouts("\n\r");
+	ploginfo("torun: %s\n\r", inbuf);
 	// //
 	char* p = cmd;
 	char* s;
@@ -244,25 +242,19 @@ int main(int argc, char** argv)
 	int fd_out = sysopen("/dev_tty0");// should-be 1
 	int pid = fork();
 	if (pid) {
-		sysouts("[Appinit] There is the parent.\n\r");
+		ploginfo("[Appinit] There is the parent.\n\r");
 		int s;
 		while (true) {
 			int child = wait(&s);
-			if (s == EXIT_CODE) {
-				sysouts("[Appinit] The child exited with EXIT_CODE.\n\r");
-				s = nil;
-			}
-			else {
-				sysouts("[Appinit] The child exited without EXIT_CODE.\n\r");
-				s = nil;
-			}
+			outsfmt("[Appinit] The child exited with %d.\n\r", s);
+			s = nil;
 			sysrest();
 		}
 	}
 	else { // here is the shell (primitive COTLAB)
 		uni::QueueLimited queue((uni::Slice) { _IMM(inbuf), sizeof(inbuf) });
 		char outbuf[2] = { 0 };
-		sysouts("[Appinit] Init SHell started.\n\r");
+		ploginfo("[Appinit] Init SHell started.\n\r");
 		// if (pid = fork()); else sysouts("[appinit] There is the child's child.\n\r");
 		while (true) {
 			if ((outbuf[0] = sysinnc()) > 0) {
