@@ -203,82 +203,97 @@ char* argv[25];
 
 int run(char* cmd)
 {
-	ploginfo("torun: %s\n\r", inbuf);
-	// //
+	int argc = 0;
 	char* p = cmd;
-	char* s;
-	int word = 0, argc = 0;
-	char ch;
-	do {
-		ch = *p++;
-		if (*p != ' ' && *p && !word) {
-			s = p;
-			word = 1;
+
+	// Parse the command string in-place
+	while (*p) {
+		while (*p == ' ') *p++ = '\0';
+		if (*p) {
+			argv[argc++] = p; // Mark the beginning of an argument
+			while (*p && *p != ' ') p++;
 		}
-		if ((*p == ' ' || !*p) && word) {
-			word = 0;
-			argv[argc++] = s;
-			*p = 0;
+		if (argc >= numsof(argv) - 1) break;
+	}
+	argv[argc] = nullptr; // Null-terminate the argument array for execv
+	if (argc == 0) return 0; // Empty command
+	// ploginfo("torun: %s (argc=%d)", argv[0], argc);
+	int pid = fork();
+	if (pid == 0) {
+		execv(argv[0], argv);
+		// spawnl("/mnt34/apps/d", "/mnt34/apps/d", "a", "b.c", nullptr);
+		// execl("/mnt34/apps/d", "/mnt34/apps/d", "a", "b.c", nullptr);
+		sysouts("sh: command not found or exec failed.\n\r");
+		exit(-1); // Terminate the failed child to prevent dual shells
+	}
+	else if (pid > 0) {
+		// Parent process (Shell): wait for the foreground child to finish
+		int s;
+		auto child_pid = wait(&s);
+		if (child_pid > 0) {
+			outsfmt("sh: process %d exited with code %d\n\r", child_pid, s);
 		}
-		if (argc >= numsof(argv)) break;
-	} while (ch);
-	argv[argc] = 0;
-	//
-	//int fd = open(argv[0], O_RDWR);
-	//if (fd == -1) { return -1; }
-	//	close(fd); fd = 0;
-	//	if (fork()) {
-	//		int s;
-	//		wait(&s);
-	//	}
-	//	else execv(argv[0], argv);
-	//
-	return _TEMP 0;
+	}
+	else {
+		sysouts("sh: fork failed.\n\r");
+	}
+
+	return 0;
 }
 
 int main(int argc, char** argv)
 {
-	int fd_inn = sysopen("/dev_tty0");// should-be 0
-	int fd_out = sysopen("/dev_tty0");// should-be 1
+	//{} startup.cpp
+	int fd_inn = sysopen("/dev/tty0");// should-be 0
+	int fd_out = sysopen("/dev/tty0");// should-be 1
+
 	int pid = fork();
 	if (pid) {
-		ploginfo("[Appinit] There is the parent.\n\r");
+		ploginfo("[Appinit] There is the parent.");
 		int s;
+		if (int pid2; pid2 = fork()); else {
+			sysouts("[Appinit] There is the child's child.\n\r");
+			return 1227;
+		}
 		while (true) {
 			int child = wait(&s);
-			outsfmt("[Appinit] The child exited with %d.\n\r", s);
-			s = nil;
+			if (child > 0) {
+				outsfmt("[Appinit] %d exited with %d.\n\r", child, s);
+			}
+			s = 0;
 			sysrest();
 		}
 	}
 	else { // here is the shell (primitive COTLAB)
 		uni::QueueLimited queue((uni::Slice) { _IMM(inbuf), sizeof(inbuf) });
-		char outbuf[2] = { 0 };
-		ploginfo("[Appinit] Init SHell started.\n\r");
-		// if (pid = fork()); else sysouts("[appinit] There is the child's child.\n\r");
+		int ch;
+		ploginfo("[Appinit] Init SHell started.");
 		while (true) {
-			if ((outbuf[0] = sysinnc()) > 0) {
-				if (outbuf[0] == '\n') {
+			if ((ch = sysinnc()) > 0) {
+				if (ch == '\n') {
 					sysouts("\n\r");// run new proc
-					queue.out(&outbuf[1], 1);
+					char null_term = '\0';
+					queue.out(&null_term, 1);
 					run(inbuf);
 					queue.clear();
 				}
-				else if (outbuf[0] == '\b') {
-					sysouts("\b \b");
+				else if (ch == '\b') {
 					if (!queue.is_empty()) {
+						sysouts("\b \b");
 						queue.p--;
 					}
 				}
 				else {
-					sysouts(outbuf);
-					queue.out(outbuf, 1);
+					outsfmt("%c", ch);
+					queue.out((char*)&ch, 1);
 				}
 			}
+			else {
+				sysrest();
+			}
 		}
-		//{TODO} exit(EXIT_CODE);
+		exit(EXIT_CODE);
 	}
-	while (1) sysrest();//{TODO} exit()
 }
 
 #endif
