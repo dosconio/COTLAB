@@ -203,7 +203,7 @@ char* argv[25];
 
 int run(char* cmd)
 {
-	int argc = 0;
+	unsigned argc = 0;
 	char* p = cmd;
 
 	// Parse the command string in-place
@@ -241,33 +241,47 @@ int run(char* cmd)
 	return 0;
 }
 
+static void print_prompt() {
+	outsfmt("> ");
+}
+
 int main(int argc, char** argv)
 {
 	//{} startup.cpp
-	int fd_inn = sysopen("/dev/tty0");// should-be 0
-	int fd_out = sysopen("/dev/tty0");// should-be 1
+	int fd_inn = sysopen("/dev/tty1");// should-be 0
+	int fd_out = sysopen("/dev/tty1");// should-be 1
+	//{} stderr
+	
+	if (0) {
+		syswrite(fd_out, "COTLAB\n\r", 8);
+		sysread(fd_inn, inbuf, sizeof(inbuf));
+		outsfmt("you input: %s\n\r", inbuf);
+	}
 
 	int pid = fork();
 	if (pid) {
-		ploginfo("[Appinit] There is the parent.");
+		// ploginfo("[Appinit] There is the parent.");
 		int s;
-		if (int pid2; pid2 = fork()); else {
-			sysouts("[Appinit] There is the child's child.\n\r");
-			return 1227;
-		}
+		// if (int pid2; pid2 = fork()); else {
+			// sysouts("[Appinit] There is the child's child.\n\r");
+			// return 1227;
+		// }
+		
 		while (true) {
 			int child = wait(&s);
 			if (child > 0) {
 				outsfmt("[Appinit] %d exited with %d.\n\r", child, s);
 			}
 			s = 0;
-			sysrest();
+			sysrest(0, 0);//{}== yield
 		}
 	}
 	else { // here is the shell (primitive COTLAB)
 		uni::QueueLimited queue((uni::Slice) { _IMM(inbuf), sizeof(inbuf) });
 		int ch;
-		ploginfo("[Appinit] Init SHell started.");
+		// ploginfo("[Appinit] Init SHell started.");
+		print_prompt();
+
 		while (true) {
 			if ((ch = sysinnc()) > 0) {
 				if (ch == '\n') {
@@ -276,6 +290,7 @@ int main(int argc, char** argv)
 					queue.out(&null_term, 1);
 					run(inbuf);
 					queue.clear();
+					print_prompt();
 				}
 				else if (ch == '\b') {
 					if (!queue.is_empty()) {
@@ -289,7 +304,7 @@ int main(int argc, char** argv)
 				}
 			}
 			else {
-				sysrest();
+				sysrest(0, 0);
 			}
 		}
 		exit(EXIT_CODE);
