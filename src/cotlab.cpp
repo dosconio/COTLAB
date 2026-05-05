@@ -162,47 +162,20 @@ void entry() {
 	cotmain(0, 0);
 }
 
-#endif
 
-#ifdef _ARINUX
+
+#else
+
 #include <unistd.h>
 #include <sys/wait.h>
+#include <fcntl.h>
+#include "c/ustring.h"
+#include "c/consio.h"
 
-_ESYM_C
-int _m_waitid(idtype_t idtype, id_t id, siginfo_t *infop, int options, void* rusage);
+static char inbuf[128];
+static char* argv[25];
 
-int main() {
-	char command[256];
-	while (true) {
-		write(1, "# ", sizeof("# ") - 1);// man 2 write
-		int count = read(0 _Comment(stdin), command, 255);// man 2 read
-		// replace \n into \0
-		command[count - 1] = 0;
-		pid_t fork_result = fork();
-		if (fork_result) {
-			// wait children to avoid zombie process
-			siginfo_t siginfo;
-			_m_waitid(P_ALL, nil, &siginfo, WEXITED, NULL);
-		}
-		else {
-			execve(command, 0, 0);//{} retval?
-			break;
-		}
-	}
-	_exit(0);
-}
-
-#elif defined(_MCCA)
-
-#include "inc/aaaaa.h"
-#include "cpp/queue"
-
-#define EXIT_CODE 0x123
-char inbuf[128];
-char* argv[25];
-
-int run(char* cmd)
-{
+static int run(char* cmd) {
 	unsigned argc = 0;
 	char* p = cmd;
 
@@ -210,106 +183,76 @@ int run(char* cmd)
 	while (*p) {
 		while (*p == ' ') *p++ = '\0';
 		if (*p) {
-			argv[argc++] = p; // Mark the beginning of an argument
+			argv[argc++] = p;
 			while (*p && *p != ' ') p++;
 		}
-		if (argc >= numsof(argv) - 1) break;
+		if (argc >= (sizeof(argv) / sizeof(argv[0])) - 1) break;
 	}
-	argv[argc] = nullptr; // Null-terminate the argument array for execv
-	if (argc == 0) return 0; // Empty command
-	// ploginfo("torun: %s (argc=%d)", argv[0], argc);
-	int pid = fork();
-	if (pid == 0) {
-		execv(argv[0], argv);
-		// spawnl("/mnt34/apps/d", "/mnt34/apps/d", "a", "b.c", nullptr);
-		// execl("/mnt34/apps/d", "/mnt34/apps/d", "a", "b.c", nullptr);
-		sysouts("sh: command not found or exec failed.\n\r");
-		exit(-1); // Terminate the failed child to prevent dual shells
-	}
-	else if (pid > 0) {
-		// Parent process (Shell): wait for the foreground child to finish
-		int s;
-		auto child_pid = wait(&s);
-		if (child_pid > 0) {
-			outsfmt("sh: process %d exited with code %d\n\r", child_pid, s);
-		}
-	}
-	else {
-		sysouts("sh: fork failed.\n\r");
+	argv[argc] = nullptr;
+	if (argc == 0) return 0;
+
+	// Built-in command: exit
+	if (StrCompare("exit", argv[0]) == 0) {
+		int retcode = (argc > 1) ? atoins(argv[1]) : 0;
+		_exit(retcode);
+		return retcode;
 	}
 
+	pid_t pid = fork();
+	if (pid == 0) {
+		execv(argv[0], argv);
+		// If execv returns, it failed
+		write(2, "sh: command not found\n\r", 23);
+		_exit(-1);
+	} else if (pid > 0) {
+		int status;
+		pid_t child_pid = wait(&status);
+		if (child_pid > 0) {
+			outsfmt("sh: process %d exited with code %d\n\r", child_pid, status);
+		}
+	} else {
+		write(2, "sh: fork failed\n\r", 17);
+	}
 	return 0;
 }
 
-static void print_prompt() {
-	outsfmt("> ");
-}
+int main(int argc, char** argv) {
+	// Standard I/O (0, 1, 2) is automatically bound to /dev/tty by the kernel
+	write(2, "COTLAB Shell Started\n\r", 22);
 
-int main(int argc, char** argv)
-{
-	//{} startup.cpp
-	int fd_inn = sysopen("/dev/tty1");// should-be 0
-	int fd_out = sysopen("/dev/tty1");// should-be 1
-	//{} stderr
-	
-	if (0) {
-		syswrite(fd_out, "COTLAB\n\r", 8);
-		sysread(fd_inn, inbuf, sizeof(inbuf));
-		outsfmt("you input: %s\n\r", inbuf);
-	}
+	while (true) {
+		write(1, "> ", 2);
+		int n = read(0, inbuf, sizeof(inbuf) - 1);
+		if (n <= 0) break;
 
-	int pid = fork();
-	if (pid) {
-		// ploginfo("[Appinit] There is the parent.");
-		int s;
-		// if (int pid2; pid2 = fork()); else {
-			// sysouts("[Appinit] There is the child's child.\n\r");
-			// return 1227;
-		// }
-		
-		while (true) {
-			int child = wait(&s);
-			if (child > 0) {
-				outsfmt("[Appinit] %d exited with %d.\n\r", child, s);
-			}
-			s = 0;
-			sysrest(0, 0);//{}== yield
+		// Kernel handles line editing (\b), we just get the full line
+		if (inbuf[n - 1] == '\n') inbuf[n - 1] = '\0';
+		else inbuf[n] = '\0';
+
+		if (inbuf[0] != '\0') {
+			run(inbuf);
 		}
 	}
-	else { // here is the shell (primitive COTLAB)
-		uni::QueueLimited queue((uni::Slice) { _IMM(inbuf), sizeof(inbuf) });
-		int ch;
-		// ploginfo("[Appinit] Init SHell started.");
-		print_prompt();
-
-		while (true) {
-			if ((ch = sysinnc()) > 0) {
-				if (ch == '\n') {
-					sysouts("\n\r");// run new proc
-					char null_term = '\0';
-					queue.out(&null_term, 1);
-					run(inbuf);
-					queue.clear();
-					print_prompt();
-				}
-				else if (ch == '\b') {
-					if (!queue.is_empty()) {
-						sysouts("\b \b");
-						queue.p--;
-					}
-				}
-				else {
-					outsfmt("%c", ch);
-					queue.out((char*)&ch, 1);
-				}
-			}
-			else {
-				sysrest(0, 0);
-			}
-		}
-		exit(EXIT_CODE);
-	}
+	return 0;
 }
+
+void entry() {
+	main(0, nullptr);
+}
+
+#ifdef _Linux
+extern "C" void OUT_b() {}
+extern "C" void IN_b() {}
+extern "C" void __stack_chk_fail() { _exit(-2); }
+void operator delete(void* ptr, stduint size) noexcept {
+}
+void operator delete[](void* ptr, stduint size) {
+}
+uni::OstreamTrait* con0_out = 0;
+void outtxt(const char* str, stduint len) {
+	write(1, str, len);
+}
+#endif
 
 #endif
 
