@@ -1,4 +1,4 @@
-﻿// ASCII CPP-14 TAB4 CRLF
+// ASCII CPP-14 TAB4 CRLF
 // AllAuthor: @dosconio
 // ModuTitle: COTLAB Console
 // Copyright: Dosconio COTLAB, GNU-GPL Version 3
@@ -169,6 +169,11 @@ void entry() {
 #include <unistd.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#ifndef _Linux
+#include <c/ISO_IEC_STD/signal.h>
+#else
+#include <signal.h>
+#endif
 #include "c/ustring.h"
 #include "c/consio.h"
 
@@ -200,6 +205,7 @@ static int run(char* cmd) {
 
 	pid_t pid = fork();
 	if (pid == 0) {
+		signal(SIGINT, SIG_DFL);
 		execv(argv[0], argv);
 		// If execv returns, it failed
 		write(2, "sh: command not found\n\r", 23);
@@ -217,6 +223,7 @@ static int run(char* cmd) {
 }
 
 int main(int argc, char** argv) {
+	signal(SIGINT, SIG_IGN);
 	// Standard I/O (0, 1, 2) is automatically bound to /dev/tty by the kernel
 	write(2, "COTLAB Shell Started\n\r", 22);
 
