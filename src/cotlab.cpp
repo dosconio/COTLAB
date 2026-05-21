@@ -169,6 +169,8 @@ void entry() {
 #include <unistd.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <sys/stat.h>
+#include <dirent.h>
 #ifndef _Linux
 #include <c/ISO_IEC_STD/signal.h>
 #else
@@ -203,6 +205,37 @@ static int run(char* cmd) {
 		return retcode;
 	}
 
+	// Built-in command: cd
+	if (StrCompare("cd", argv[0]) == 0) {
+		const char* target_path = (argc > 1) ? argv[1] : "/";
+		if (chdir(target_path) < 0) {
+			write(2, "cd: failed to change directory\n\r", 32);
+		}
+		return 0;
+	}
+
+	// Built-in command: cot+ls (simple directory listing)
+	if (StrCompare("cot+ls", argv[0]) == 0) {
+		const char* path = (argc > 1) ? argv[1] : ".";
+		DIR* dir = opendir(path);
+		if (!dir) {
+			struct stat st;
+			if (stat(path, &st) == 0) {
+				outsfmt("%s\n\r", path);
+				return 0;
+			}
+			write(2, "ls: cannot access path\n\r", 24);
+			return -1;
+		}
+		struct dirent* entry;
+		while ((entry = readdir(dir)) != nullptr) {
+			outsfmt("%s  ", entry->d_name);
+		}
+		outsfmt("\n\r");
+		closedir(dir);
+		return 0;
+	}
+
 	pid_t pid = fork();
 	if (pid == 0) {
 		signal(SIGINT, SIG_DFL);
@@ -228,7 +261,12 @@ int main(int argc, char** argv) {
 	write(2, "COTLAB Shell Started\n\r", 22);
 
 	while (true) {
-		write(1, "> ", 2);
+		char cwd_buf[256];
+		if (getcwd(cwd_buf, sizeof(cwd_buf))) {
+			outsfmt("root@mach %s > ", cwd_buf);
+		} else {
+			write(1, "root@mach ? > ", 14);
+		}
 		int n = read(0, inbuf, sizeof(inbuf) - 1);
 		if (n <= 0) break;
 
