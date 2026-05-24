@@ -26,7 +26,7 @@ enum prompt_t { COTLAB_PROMPT_FULL, COTLAB_PROMPT_TRIARROW };
 static prompt_t prompt{ COTLAB_PROMPT_FULL };
 
 struct CotStrBuff : public uni::String {
-	CotStrBuff(stduint lenbuf = 0x1000) : String(lenbuf) { }
+	CotStrBuff(stduint lenbuf = 0x1000) : String(String::Charset::UTF8, lenbuf) { }
 	stduint getStdin() {
 		return ConScanLine(addr, limits);
 	}
@@ -247,7 +247,7 @@ static int run(char* cmd) {
 		int status;
 		pid_t child_pid = wait(&status);
 		if (child_pid > 0) {
-			outsfmt("sh: process %d exited with code %d\n\r", child_pid, status);
+			if (status) outsfmt("sh: process %d exited with code %d\n\r", child_pid, status);
 		}
 	} else {
 		write(2, "sh: fork failed\n\r", 17);
