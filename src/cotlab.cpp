@@ -182,6 +182,9 @@ void entry() {
 static char inbuf[128];
 static char* argv[25];
 
+extern "C" char* getenv(const char* name);
+extern "C" int setenv(const char* name, const char* value, int overwrite);
+
 static int run(char* cmd) {
 	unsigned argc = 0;
 	char* p = cmd;
@@ -236,10 +239,68 @@ static int run(char* cmd) {
 		return 0;
 	}
 
+	// Check if the command name contains a slash character
+	bool has_slash = false;
+	const char* path_ptr = argv[0];
+	while (*path_ptr) {
+		if (*path_ptr == '/') {
+			has_slash = true;
+			break;
+		}
+		path_ptr++;
+	}
+
+	char resolved_path[256];
+	bool found = false;
+
+	if (!has_slash) {
+		// Search the executable file inside PATH directories
+		const char* path_env = getenv("PATH");
+		if (!path_env) {
+			path_env = "/md0:/mnt34/apps";
+		}
+		char path_buf[256];
+		StrCopyN(path_buf, path_env, sizeof(path_buf));
+		char* dir = path_buf;
+		while (dir && *dir) {
+			char* next_dir = (char*)StrIndexChar(dir, ':');
+			if (next_dir) {
+				*next_dir = '\0';
+				next_dir++;
+			}
+			
+			// Build path: dir/command
+			StrCopy(resolved_path, dir);
+			stduint rlen = StrLength(resolved_path);
+			if (rlen > 0 && resolved_path[rlen - 1] != '/') {
+				StrAppend(resolved_path, "/");
+			}
+			StrAppend(resolved_path, argv[0]);
+			
+			// Verify if the file is accessible
+			int fd = open(resolved_path, O_RDONLY);
+			if (fd >= 0) {
+				close(fd);
+				found = true;
+				break;
+			}
+			dir = next_dir;
+		}
+	} else {
+		StrCopyN(resolved_path, argv[0], sizeof(resolved_path));
+		found = true;
+	}
+
+	if (!found) {
+		write(2, "sh: command not found\n\r", 23);
+		setenv("?", "127", 1);
+		return -1;
+	}
+
 	pid_t pid = fork();
 	if (pid == 0) {
 		signal(SIGINT, SIG_DFL);
-		execv(argv[0], argv);
+		execv(resolved_path, argv);
 		// If execv returns, it failed
 		write(2, "sh: command not found\n\r", 23);
 		_exit(-1);
@@ -248,12 +309,18 @@ static int run(char* cmd) {
 		pid_t child_pid = wait(&status);
 		if (child_pid > 0) {
 			if (status) outsfmt("sh: process %d exited with code %d\n\r", child_pid, status);
+			
+			// Update exit status code environment variable
+			char status_str[16];
+			outsfmtbuf(status_str, "%d", status);
+			setenv("?", status_str, 1);
 		}
 	} else {
 		write(2, "sh: fork failed\n\r", 17);
 	}
 	return 0;
 }
+
 
 int main(int argc, char** argv) {
 	signal(SIGINT, SIG_IGN);
