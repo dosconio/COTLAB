@@ -201,6 +201,55 @@ static int run(char* cmd) {
 	argv[argc] = nullptr;
 	if (argc == 0) return 0;
 
+	// Parse redirection arguments in parsed argv
+	const char* infile = nullptr;
+	const char* outfile = nullptr;
+	const char* errfile = nullptr;
+	bool append_out = false;
+	unsigned new_argc = 0;
+
+	for (unsigned i = 0; i < argc; i++) {
+		if (StrCompare(argv[i], "<") == 0) {
+			if (i + 1 < argc) {
+				infile = argv[i + 1];
+				i++; // Skip filename
+			} else {
+				write(2, "sh: syntax error near unexpected token `newline'\n\r", 50);
+				return -1;
+			}
+		} else if (StrCompare(argv[i], ">") == 0) {
+			if (i + 1 < argc) {
+				outfile = argv[i + 1];
+				append_out = false;
+				i++;
+			} else {
+				write(2, "sh: syntax error near unexpected token `newline'\n\r", 50);
+				return -1;
+			}
+		} else if (StrCompare(argv[i], ">>") == 0) {
+			if (i + 1 < argc) {
+				outfile = argv[i + 1];
+				append_out = true;
+				i++;
+			} else {
+				write(2, "sh: syntax error near unexpected token `newline'\n\r", 50);
+				return -1;
+			}
+		} else if (StrCompare(argv[i], "2>") == 0) {
+			if (i + 1 < argc) {
+				errfile = argv[i + 1];
+				i++;
+			} else {
+				write(2, "sh: syntax error near unexpected token `newline'\n\r", 50);
+				return -1;
+			}
+		} else {
+			argv[new_argc++] = argv[i];
+		}
+	}
+	argv[new_argc] = nullptr;
+	argc = new_argc;
+
 	// Built-in command: exit
 	if (StrCompare("exit", argv[0]) == 0) {
 		int retcode = (argc > 1) ? atoins(argv[1]) : 0;
@@ -300,6 +349,46 @@ static int run(char* cmd) {
 	pid_t pid = fork();
 	if (pid == 0) {
 		signal(SIGINT, SIG_DFL);
+
+		// Apply input redirection
+		if (infile) {
+			int fd = open(infile, O_RDONLY);
+			if (fd < 0) {
+				write(2, "sh: failed to open input file\n\r", 31);
+				_exit(-1);
+			}
+			dup2(fd, 0);
+			close(fd);
+		}
+
+		// Apply output redirection
+		if (outfile) {
+			int flags = O_WRONLY | O_CREAT;
+			if (append_out) {
+				flags |= O_APPEND;
+			} else {
+				flags |= O_TRUNC;
+			}
+			int fd = open(outfile, flags);
+			if (fd < 0) {
+				write(2, "sh: failed to open output file\n\r", 32);
+				_exit(-1);
+			}
+			dup2(fd, 1);
+			close(fd);
+		}
+
+		// Apply stderr redirection
+		if (errfile) {
+			int fd = open(errfile, O_WRONLY | O_CREAT | O_TRUNC);
+			if (fd < 0) {
+				write(2, "sh: failed to open error file\n\r", 31);
+				_exit(-1);
+			}
+			dup2(fd, 2);
+			close(fd);
+		}
+
 		execv(resolved_path, argv);
 		// If execv returns, it failed
 		write(2, "sh: command not found\n\r", 23);
