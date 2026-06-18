@@ -43,9 +43,10 @@ Contask::Contask(const char* fname, consrc_t srctyp, IdenChain* idens) {
 Contask::~Contask() {
 	if ((stage == STAGE_EXECUTED || stage == STAGE_PARSED || stage == STAGE_FAILED) || dc.Count())
 	{
+		auto* saved_togc = npu->TokenOperatorGroupChain;
 		npu->~NestedParseUnit();
-		npu->TokenOperatorGroupChain->~Chain();
-		mfree(npu->TokenOperatorGroupChain);
+		saved_togc->~Chain();
+		mfree(saved_togc);
 	}
 	else {
 		if (lp) {

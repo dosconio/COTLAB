@@ -8,6 +8,8 @@
 
 #include <cpp/nodes>
 #include <cpp/parse.hpp>
+#include <stdlib.h>
+#include <unistd.h>
 
 enum consrc_t { CONTASK_FILE, CONTASK_BUF };
 
@@ -58,6 +60,25 @@ public:
 
 };
 
-
+struct CotStrBuff : public uni::String {
+	CotStrBuff(stduint lenbuf = 0x1000) : String(String::Charset::UTF8, lenbuf) { }
+	stduint getStdin() {
+		return ConScanLine(addr, limits);
+	}
+	#if !defined(_MCCA) && _MCCA != 0x8664
+	CotStrBuff& getEnv(const char* str) {
+		StrCopy(addr, getenv(str));// self.String::operator=(getenv(str));
+		return self;
+	}
+	#endif
+	CotStrBuff& getCwd() { (void)ConGetCurrentDirectory(addr, limits); return self; }
+	CotStrBuff& FormatPath() { // with suffix
+		//{TODO} Replace
+		uni::String& the_str = self;
+		Replaced("\\", "/");
+		if (self[-1] != '/') self += "/";
+		return self;
+	}
+};
 
 #endif // _INC_CONTASK
