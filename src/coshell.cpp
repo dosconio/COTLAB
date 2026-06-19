@@ -9,6 +9,7 @@
 #endif
 #include <cpp/unisym>
 #include <cpp/string>
+#include <stdio.h>
 #include "c/consio.h"
 
 #include "../inc/cothead.h"
@@ -28,15 +29,36 @@
 
 extern "C" char* getenv(const char* name);
 extern "C" int setenv(const char* name, const char* value, int overwrite);
+extern bool mode_shell;
 
 static char* argv[25];
 
 void print_prompt() {
 	CotStrBuff sb(0x100);
 	#ifndef _MCCA //{}TEMP
-	uni::Console.OutFormat("%s> ", sb.getCwd().FormatPath().reference());
+	CotStrBuff username;
+	CotStrBuff hostname;
+	username.getEnv("USER"
+		#ifdef _WinNT
+		"NAME"// %USERNAME%
+		#endif
+	);
+	username.Refresh();
+	//
+	#ifdef _WinNT
+	hostname.getEnv("COMPUTERNAME");
+	#else
+	hostname.getEnv("HOST");
 	#endif
-	// fflush(stdout);
+	hostname.Refresh();
+	uni::Console.OutFormat("%s@%s %s %c ",
+		username.getCharCount() ? username.reference() : "root",
+		hostname.getCharCount() ? hostname.reference() : "localhost",
+		sb.getCwd().FormatPath().reference(),
+		mode_shell ? '$' : '>' // $# and >
+	);
+	fflush(stdout);
+	#endif
 }
 
 static bool resolve_path(const char* cmd, char* resolved, size_t max_len) {
@@ -86,7 +108,6 @@ static bool resolve_path(const char* cmd, char* resolved, size_t max_len) {
 	return false;
 }
 
-extern bool mode_shell;
 int run_command(char* cmd) {
 	static char expanded[512];
 	const char* src = cmd;

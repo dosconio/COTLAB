@@ -12,8 +12,6 @@
 #endif
 #include <cpp/unisym>
 
-#if !defined(_ACCM) && !defined(_MCCA)// Linux
-
 #include <c/file.h>
 #include "../inc/cothead.h"
 #include "../inc/contask.h"
@@ -39,7 +37,7 @@ enum prompt_t { COTLAB_PROMPT_FULL, COTLAB_PROMPT_TRIARROW };
 static prompt_t prompt{ COTLAB_PROMPT_FULL };
 
 static char inbuf[128];
-static char cwd_buf[256];
+
 pureptr_t glb;
 bool mode_shell = true;
 
@@ -143,13 +141,7 @@ int cotmain(int argc, char** argv) {
 	switch (option) {
 	case option_t::SHELL: while (true) {
 		if (mode_shell) {
-			if (getcwd(cwd_buf, sizeof(cwd_buf))) {
-				outsfmt("root@mach %s > ", cwd_buf);
-				fflush(stdout);
-			}
-			else {
-				write(1, "root@mach ? > ", 14);
-			}
+			print_prompt();
 			int n = read(0, inbuf, sizeof(inbuf) - 1);
 			if (n <= 0) break;
 
@@ -195,69 +187,16 @@ void entry() {
 }
 
 
-
-#else
-
-#include <unistd.h>
-#include <sys/wait.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <dirent.h>
-#ifndef _Linux
-#include <c/ISO_IEC_STD/signal.h>
-#else
-#include <signal.h>
-#endif
-#include "c/ustring.h"
-#include "c/consio.h"
-
-static char inbuf[128];
-bool mode_shell = true;
-
-int run_command(char* cmd);
-
-int main(int argc, char** argv) {
-	signal(SIGINT, SIG_IGN);
-	// Standard I/O (0, 1, 2) is automatically bound to /dev/tty by the kernel
-	// write(2, "COTLAB Shell Started\n\r", 22);
-
-	while (true) {
-		char cwd_buf[256];
-		if (getcwd(cwd_buf, sizeof(cwd_buf))) {
-			outsfmt("root@mach %s > ", cwd_buf);
-		} else {
-			write(1, "root@mach ? > ", 14);
-		}
-		int n = read(0, inbuf, sizeof(inbuf) - 1);
-		if (n <= 0) break;
-
-		// Kernel handles line editing (\b), we just get the full line
-		if (inbuf[n - 1] == '\n') inbuf[n - 1] = '\0';
-		else inbuf[n] = '\0';
-
-		if (inbuf[0] != '\0') {
-			run_command(inbuf);
-		}
-	}
-	return 0;
-}
-
-void entry() {
-	main(0, nullptr);
-}
-
-#ifdef _Linux
-extern "C" void OUT_b() {}
-extern "C" void IN_b() {}
-extern "C" void __stack_chk_fail() { _exit(-2); }
-void operator delete(void* ptr, stduint size) noexcept {
-}
-void operator delete[](void* ptr, stduint size) {
-}
-uni::OstreamTrait* con0_out = 0;
-void outtxt(const char* str, stduint len) {
-	write(1, str, len);
-}
-#endif
-
-#endif
+// #ifdef _Linux
+// extern "C" void OUT_b() {}
+// extern "C" void IN_b() {}
+// extern "C" void __stack_chk_fail() { _exit(-2); }
+// void operator delete(void* ptr, stduint size) noexcept {
+// }
+// void operator delete[](void* ptr, stduint size) {
+// }
+// uni::OstreamTrait* con0_out = 0;
+// void outtxt(const char* str, stduint len) {
+// 	write(1, str, len);
+// }
+// #endif

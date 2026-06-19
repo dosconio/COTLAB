@@ -1,4 +1,4 @@
-﻿// ASCII CPP-14 TAB4 CRLF
+// ASCII CPP-14 TAB4 CRLF
 // AllAuthor: @dosconio
 // ModuTitle: COTLAB Task
 // Copyright: Dosconio COTLAB, GNU-GPL Version 3
@@ -65,12 +65,11 @@ struct CotStrBuff : public uni::String {
 	stduint getStdin() {
 		return ConScanLine(addr, limits);
 	}
-	#if !defined(_MCCA) && _MCCA != 0x8664
 	CotStrBuff& getEnv(const char* str) {
-		StrCopy(addr, getenv(str));// self.String::operator=(getenv(str));
+		const char* val = getenv(str);
+		if (val) StrCopy(addr, val); else addr[0] = '\0';
 		return self;
 	}
-	#endif
 	CotStrBuff& getCwd() { (void)ConGetCurrentDirectory(addr, limits); return self; }
 	CotStrBuff& FormatPath() { // with suffix
 		//{TODO} Replace
