@@ -3,7 +3,6 @@
 // ModuTitle: COTLAB Task
 // Copyright: Dosconio COTLAB, GNU-GPL Version 3
 
-#include <stdio.h>
 #include "../inc/cothead.h"
 #include "../inc/contask.h"
 
@@ -263,7 +262,7 @@ static void printtok(pureptr_t addr, stduint typ, bool readonly = false) {
 	{
 	case tok_number:
 		printf("%lf = ", double(*(uni::Coe*)addr));
-		printf("%s", uni::String(*(uni::Coe*)addr).reference());
+		printf("%s", (((uni::Coe*)addr)->ToString()).reference());
 		break;
 	default:
 		printf("%s", addr);

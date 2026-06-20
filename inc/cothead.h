@@ -2,6 +2,8 @@
 #ifndef __COTHEAD
 #define __COTHEAD
 
+#define _CRT_SECURE_NO_WARNINGS 1
+
 #include <cpp/basic>
 #include <cpp/nodes>
 #include <c/mnode.h>

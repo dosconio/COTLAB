@@ -7,31 +7,19 @@
 #ifdef _ARINUX
 #define _MCCA
 #endif
-#include <cpp/unisym>
-#include <cpp/string>
-#include <stdio.h>
-#include "c/consio.h"
 
+#include "../inc/coenvir.h"
 #include "../inc/cothead.h"
 #include "../inc/contask.h"
 
-#include <unistd.h>
-#include <sys/wait.h>
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <dirent.h>
-
-#ifndef _Linux
-#include <c/ISO_IEC_STD/signal.h>
-#else
-#include <signal.h>
-#endif
 
 extern "C" char* getenv(const char* name);
 extern "C" int setenv(const char* name, const char* value, int overwrite);
 extern bool mode_shell;
 
 static char* argv[25];
+
+#ifndef _WinNT
 
 void print_prompt() {
 	CotStrBuff sb(0x100);
@@ -457,4 +445,12 @@ int run_command(char* cmd) {
 	}
 	return 0;
 }
+
+#else
+
+void print_prompt() {
+	printf("> ");
+}
+
+#endif
 

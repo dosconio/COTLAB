@@ -3,10 +3,9 @@
 // ModuTitle: for linkage(built-in and outside) and execution
 // Copyright: Dosconio COTLAB, GNU-GPL Version 3
 
-#include <stdio.h>
-#include <cpp/nodes>
 #include "../inc/cothead.h"
 #include "../inc/contask.h"
+
 extern pureptr_t glb;
 
 #define FuncOp2(iden,sym) void Op##iden(uni::DnodeChain* io) {\

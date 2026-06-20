@@ -6,10 +6,11 @@
 #ifndef _INC_CONTASK
 #define _INC_CONTASK
 
+#include "coenvir.h"
 #include <cpp/nodes>
 #include <cpp/parse.hpp>
 #include <stdlib.h>
-#include <unistd.h>
+
 
 enum consrc_t { CONTASK_FILE, CONTASK_BUF };
 

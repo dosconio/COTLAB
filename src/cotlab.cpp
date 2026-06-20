@@ -15,12 +15,6 @@
 #include <c/file.h>
 #include "../inc/cothead.h"
 #include "../inc/contask.h"
-#include <unistd.h>
-#ifndef _Linux
-#include <c/ISO_IEC_STD/signal.h>
-#else
-#include <signal.h>
-#endif
 
 extern int run_command(char* cmd);
 
@@ -137,10 +131,13 @@ int cotmain(int argc, char** argv) {
 
 	//{TODO} implemente Console in UNISYM
 
-	
+#ifdef _WinNT
+	mode_shell = false;
+#endif
 	switch (option) {
 	case option_t::SHELL: while (true) {
 		if (mode_shell) {
+#ifndef _WinNT
 			print_prompt();
 			int n = read(0, inbuf, sizeof(inbuf) - 1);
 			if (n <= 0) break;
@@ -152,6 +149,7 @@ int cotmain(int argc, char** argv) {
 			if (inbuf[0] != '\0') {
 				run_command(inbuf);
 			}
+#endif
 		}
 		else branch_arith(cbuff, ic_list);
 	} break;
