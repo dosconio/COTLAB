@@ -22,7 +22,9 @@ lin32:
 
 win64:
 	windres -i ./inc/resources.rc -o $(uobjpath)/cotres.obj
-	${CX32} -D_Win64 $(builds) $(uobjpath)/cotres.obj -I$(udir_win)/inc -L$(ubinpath) -lw64d -o $(ubinpath)/AMD64/Win64/cot.exe -w -m64
+	g++ -m64 -s -O3 -I$(uincpath) -L$(ubinpath) $(cxxdef) -static \
+		-D_Win64 $(builds) $(uobjpath)/cotres.obj -I$(udir_win)/inc -L$(ubinpath) -lw64d -o $(ubinpath)/AMD64/Win64/cot.exe -w \
+		-Wl,-u,printlog
 
 # Debian-Package System
 

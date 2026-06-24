@@ -297,6 +297,8 @@ bool CotExecuate(uni::Nnode* inp, uni::NnodeChain* nc, uni::Nnode*& parencrt, Id
 			delete (pureptr_t)f_io;//mfree(f_io);
 			crt = nc->Remove(ncrt = crt);
 			if (parencrt == ncrt) parencrt = crt;
+			// Avoid leaving the parent sub-expression pointing at the removed node.
+			else if (parencrt && parencrt->subf == ncrt) parencrt->subf = crt;
 		}
 	}
 
