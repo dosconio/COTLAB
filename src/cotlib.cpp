@@ -253,7 +253,7 @@ bool Contask::Link() {
 	if (crtnes && (crtnes = crtnes->next)) do if (crtnes->GetMagnoField().row == crtnes->left->GetMagnoField().row) {
 		crtrow = crtnes->GetMagnoField().row, crtcol = crtnes->GetMagnoField().col; // -(crtnes->addr ? StrLength(crtnes->addr) : 0);
 		state = false;
-	} while (crtnes = crtnes->next);
+	} while ((crtnes = crtnes->next));
 	LinkNumber(this->npu->GetNetwork()->Root(), this->npu->TokenOperatorGroupChain);
 	// Link
 	if (!state)
@@ -294,7 +294,7 @@ bool CotExecuate(uni::Nnode* inp, uni::NnodeChain* nc, uni::Nnode*& parencrt, Id
 				f_io->Append(CotCopy(ncrt->addr, ncrt->type), false)->type = ncrt->type;
 			crt->GetMagnoField().bind(f_io);
 			nc->Receive(crt, f_io);
-			delete (pureptr_t)f_io;//mfree(f_io);
+			mfree(f_io);
 			crt = nc->Remove(ncrt = crt);
 			if (parencrt == ncrt) parencrt = crt;
 			// Avoid leaving the parent sub-expression pointing at the removed node.

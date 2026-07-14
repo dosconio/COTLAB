@@ -3,7 +3,6 @@
 // ModuTitle: COTLAB Console
 // Copyright: Dosconio COTLAB, GNU-GPL Version 3
 
-#define _CRT_SECURE_NO_WARNINGS
 #ifdef _ARINUX
 #define _MCCA
 #endif
@@ -63,7 +62,7 @@ static bool resolve_path(const char* cmd, char* resolved, size_t max_len) {
 	if (!has_slash) {
 		const char* path_env = getenv("PATH");
 		if (!path_env) {
-			path_env = "/md0:/mnt34/apps";
+			path_env = "/md0"; // "/md0:/mnt34/apps";
 		}
 		char path_buf[256];
 		StrCopyN(path_buf, path_env, sizeof(path_buf));

@@ -235,7 +235,7 @@ void CotResourceRemove(IdenObject* p_iobj)
 	void*& obj = p_iobj->offs;
 	if (!obj) return;
 	switch (p_iobj->type) {
-	case tok_number:
+	case datatype(tok_number):
 		((uni::Coe*)obj)->~Coe();
 		break;
 	default:
@@ -302,7 +302,7 @@ void InodePrint(IdenChain* ic) {
 		IdenObject& io = *(IdenObject*)crt->type;
 		printf("%s ", crt->addr);
 		printtok(io.offs, io.type, !io.mutabl);
-	} while (crt = crt->next);
+	} while ((crt = crt->next));
 }
 
 

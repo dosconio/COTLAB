@@ -6,7 +6,6 @@
 //{TODO} Arinux
 //{TODO} in Win64 CGW64
 
-#define _CRT_SECURE_NO_WARNINGS
 #ifdef _ARINUX
 #define _MCCA
 #endif

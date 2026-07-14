@@ -1,9 +1,8 @@
-.vs/
 .vscode/
-COTLAB/
-COTLAB.sln
-COTLAB.vcxproj*
 cotlab.org/COTLAB/*
+demo/COTLAB/.vs
+demo/COTLAB/COTLAB
+demo/COTLAB/target
 
 .deb/
 .pacman/
