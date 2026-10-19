@@ -95,6 +95,101 @@ static bool resolve_path(const char* cmd, char* resolved, size_t max_len) {
 	return false;
 }
 
+bool complete_line(char* buffer, stduint capacity, stduint& length, stduint& position) {
+	stduint begin = position;
+	while (begin && buffer[begin - 1] != ' ') begin--;
+	stduint word = position - begin;
+
+	bool cd_arg = false;
+	{
+		stduint p = begin;
+		while (p && buffer[p - 1] == ' ') p--;
+		stduint prev_begin = p;
+		while (prev_begin && buffer[prev_begin - 1] != ' ') prev_begin--;
+		if (p - prev_begin == 2 && buffer[prev_begin] == 'c' && buffer[prev_begin + 1] == 'd') cd_arg = true;
+	}
+
+	stduint slash = 0;
+	for (stduint i = 0; i < word; i++) {
+		if (buffer[begin + i] == '/') slash = i + 1;
+	}
+	if (!slash && !cd_arg) return false;
+
+	char dir[256];
+	stduint dir_len = 0;
+	if (slash) {
+		for (stduint i = 0; i < slash && dir_len + 1 < sizeof(dir); i++) dir[dir_len++] = buffer[begin + i];
+	}
+	else {
+		dir[dir_len++] = '.';
+		dir[dir_len++] = '/';
+	}
+	dir[dir_len] = 0;
+
+	char prefix[128];
+	stduint prefix_len = 0;
+	for (stduint i = slash; i < word && prefix_len + 1 < sizeof(prefix); i++) prefix[prefix_len++] = buffer[begin + i];
+	prefix[prefix_len] = 0;
+
+	DIR* d = opendir(dir);
+	if (!d) return false;
+
+	char common[128];
+	stduint common_len = 0;
+	stduint hits = 0;
+	struct dirent* entry;
+	while ((entry = readdir(d)) != nullptr) {
+		const char* name = entry->d_name;
+		if (StrCompare(name, ".") == 0 || StrCompare(name, "..") == 0) continue;
+		if (StrCompareN(name, prefix, prefix_len) != 0) continue;
+		if (cd_arg) {
+			char full[512];
+			StrCopy(full, dir);
+			StrAppend(full, name);
+			struct stat st;
+			if (stat(full, &st) != 0 || !(st.st_mode & S_IFDIR)) continue;
+		}
+		if (!hits) {
+			StrCopyN(common, name, sizeof(common));
+			common_len = StrLength(common);
+		}
+		else {
+			stduint i = 0;
+			while (i < common_len && name[i] == common[i]) i++;
+			common_len = i;
+			common[i] = 0;
+		}
+		hits++;
+	}
+	closedir(d);
+	if (!hits) return false;
+	if (hits > 1 && common_len <= prefix_len) return false;
+
+	stduint base = begin + slash;
+	if (base + common_len >= capacity) return false;
+	for (stduint i = 0; i < common_len; i++) buffer[base + i] = common[i];
+	length = base + common_len;
+	position = length;
+
+	bool is_dir = false;
+	if (hits == 1) {
+		char full[512];
+		StrCopy(full, dir);
+		StrAppend(full, common);
+		struct stat st;
+		if (stat(full, &st) == 0 && (st.st_mode & S_IFDIR)) is_dir = true;
+	}
+	if (is_dir && length + 1 < capacity) {
+		buffer[length++] = '/';
+	}
+	else if (!is_dir && hits == 1 && length + 1 < capacity) {
+		buffer[length++] = ' ';
+	}
+	position = length;
+	buffer[length] = 0;
+	return true;
+}
+
 int run_command(char* cmd) {
 	static char expanded[512];
 	const char* src = cmd;

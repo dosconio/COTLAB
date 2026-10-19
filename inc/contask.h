@@ -63,9 +63,6 @@ public:
 
 struct CotStrBuff : public uni::String {
 	CotStrBuff(stduint lenbuf = 0x1000) : String(String::Charset::UTF8, lenbuf) { }
-	stduint getStdin() {
-		return ConScanLine(addr, limits);
-	}
 	CotStrBuff& getEnv(const char* str) {
 		const char* val = getenv(str);
 		if (val) StrCopy(addr, val); else addr[0] = '\0';

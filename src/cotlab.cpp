@@ -14,8 +14,10 @@
 #include <c/file.h>
 #include "../inc/cothead.h"
 #include "../inc/contask.h"
+#include <cpp/System/Terminal.hpp>
 
 extern int run_command(char* cmd);
+extern bool complete_line(char* buffer, stduint capacity, stduint& length, stduint& position);
 
 #define CotTitle "COTLAB Console Build " __DATE__
 
@@ -30,17 +32,20 @@ enum prompt_t { COTLAB_PROMPT_FULL, COTLAB_PROMPT_TRIARROW };
 static prompt_t prompt{ COTLAB_PROMPT_FULL };
 
 static char inbuf[128];
+static char hist_buf[16 * sizeof(inbuf)];
 
 pureptr_t glb;
 bool mode_shell = true;
 
 void print_prompt();
 
-int branch_arith(CotStrBuff& cbuff, IdenChain(&ic_list)[3]) {
+int branch_arith(CotStrBuff& cbuff, IdenChain(&ic_list)[3], uni::TerminalLine& line) {
 	using namespace uni;
 	IdenChain& ic_mac = ic_list[0], & ic_sen = ic_list[1], & ic_ise = ic_list[2];
 	print_prompt();
-	cbuff.getStdin();
+	if (!line.Edit()) return 1;
+	line.PushHistory(inbuf);
+	cbuff.uni::String::operator=(inbuf);
 	StrDeprefixSpaces(cbuff.reflect());
 	if (cbuff == "exit") exit(0);
 	else if (cbuff == "help") {
@@ -134,23 +139,24 @@ int cotmain(int argc, char** argv) {
 	mode_shell = false;
 #endif
 	switch (option) {
-	case option_t::SHELL: while (true) {
-		if (mode_shell) {
+	case option_t::SHELL: {
+		uni::TerminalBackend backend;
+		uni::TerminalDecoder decoder(&backend);
+		uni::TerminalLine line(&decoder, inbuf, sizeof(inbuf), hist_buf, sizeof(hist_buf) / sizeof(inbuf), complete_line);
+		while (true) {
+			if (mode_shell) {
 #ifndef _WinNT
-			print_prompt();
-			int n = read(0, inbuf, sizeof(inbuf) - 1);
-			if (n <= 0) break;
+				print_prompt();
+				if (!line.Edit()) break;
 
-			// Kernel handles line editing (\b), we just get the full line
-			if (inbuf[n - 1] == '\n') inbuf[n - 1] = '\0';
-			else inbuf[n] = '\0';
-
-			if (inbuf[0] != '\0') {
-				run_command(inbuf);
-			}
+				if (inbuf[0] != '\0') {
+					line.PushHistory(inbuf);
+					run_command(inbuf);
+				}
 #endif
+			}
+			else if (branch_arith(cbuff, ic_list, line)) break;
 		}
-		else branch_arith(cbuff, ic_list);
 	} break;
 	case option_t::FILE:
 		//{TODO}
