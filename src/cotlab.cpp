@@ -6,6 +6,10 @@
 //{TODO} Arinux
 //{TODO} in Win64 CGW64
 
+/*example*
+	cot -m -c "1+2+3"
+*/
+
 #ifdef _ARINUX
 #define _MCCA
 #endif
@@ -39,15 +43,16 @@ bool mode_shell = true;
 
 void print_prompt();
 
-int branch_arith(CotStrBuff& cbuff, IdenChain(&ic_list)[3], uni::TerminalLine& line) {
+int run_arith_line(const char* input, CotStrBuff& cbuff, IdenChain(&ic_list)[3]) {
 	using namespace uni;
 	IdenChain& ic_mac = ic_list[0], & ic_sen = ic_list[1], & ic_ise = ic_list[2];
-	print_prompt();
-	if (!line.Edit()) return 1;
-	line.PushHistory(inbuf);
-	cbuff.uni::String::operator=(inbuf);
+	cbuff.uni::String::operator=(input);
 	StrDeprefixSpaces(cbuff.reflect());
+	if (!cbuff.reference()[0] || cbuff.reference()[0] == '#') return 0;
 	if (cbuff == "exit") exit(0);
+	else if (cbuff == "+s") {
+		mode_shell = true;
+	}
 	else if (cbuff == "help") {
 		Console.OutFormat(
 			CotTitle
@@ -86,6 +91,46 @@ int branch_arith(CotStrBuff& cbuff, IdenChain(&ic_list)[3], uni::TerminalLine& l
 	return 0;// important
 }
 
+int run_cot_line(char* input, CotStrBuff& cbuff, IdenChain(&ic_list)[3]) {
+	if (!input || input[0] == '\0') return 0;
+#ifndef _WinNT
+	if (mode_shell) {
+		return run_command(input);
+	}
+#endif
+	return run_arith_line(input, cbuff, ic_list);
+}
+
+int run_script_file(const char* filepath, CotStrBuff& cbuff, IdenChain(&ic_list)[3]) {
+	if (!filepath || !filepath[0]) return -1;
+	uni::HostFile file(filepath);
+	if (!bool(file)) {
+		printlog(_LOG_ERROR, "File %s is misty.", filepath);
+		return -1;
+	}
+	char line_buf[256] = {};
+	while (file.FetchLine(line_buf, sizeof(line_buf))) {
+		stduint len = StrLength(line_buf);
+		while (len > 0 && (line_buf[len - 1] == '\n' || line_buf[len - 1] == '\r')) {
+			line_buf[--len] = '\0';
+		}
+		if (line_buf[0] != '\0') {
+			run_cot_line(line_buf, cbuff, ic_list);
+		}
+		line_buf[0] = '\0';
+	}
+	return 0;
+}
+
+int branch_arith(CotStrBuff& cbuff, IdenChain(&ic_list)[3], uni::TerminalLine& line) {
+	print_prompt();
+	if (!line.Edit()) return 1;
+	if (inbuf[0] != '\0') {
+		line.PushHistory(inbuf);
+		run_arith_line(inbuf, cbuff, ic_list);
+	}
+	return 0;// important
+}
 
 
 int cotmain(int argc, char** argv) {
@@ -114,23 +159,45 @@ int cotmain(int argc, char** argv) {
 		}
 	}
 
-	for (stduint i = 1; i < (stduint)argc; i++) {
+	const char* target_arg = nullptr;
+	for (int i = 1; i < argc; i++) {
+		if (!argv || !argv[i]) continue;
 		if (argv[i][0] == '-') switch (argv[i][1]) {
 		case 'c':
-			option = option_t::COMMAND; break;
+			option = option_t::COMMAND;
+			if (argv[i][2] != '\0') target_arg = &argv[i][2];
+			break;
 		case 's':// omit the rest of this argv
 			option = option_t::SHELL; break;
 		case 'f':// follow by a file name
-			option = option_t::FILE; break;
+			option = option_t::FILE;
+			if (argv[i][2] != '\0') target_arg = &argv[i][2];
+			break;
 		case 'm':
 			mode_shell = false; break;
 		default:
-			printlog(_LOG_ERROR, "Unknown Option: -%s", argv[i]);
+			if (option == option_t::COMMAND && !target_arg) {
+				target_arg = argv[i];
+				break;
+			}
+			printlog(_LOG_ERROR, "Unknown Option: %s", argv[i]);
 			return -1;
 		}
+		else {
+			if (option == option_t::SHELL) {
+				option = option_t::FILE;
+			}
+			target_arg = argv[i];
+		}
 	}
-
-	ploginfo("Library: %s", ulibver);
+	if (option == option_t::COMMAND && !target_arg) {
+		printlog(_LOG_ERROR, "Missing command for -c");
+		return -1;
+	}
+	if (option == option_t::FILE && !target_arg) {
+		printlog(_LOG_ERROR, "Missing file name for -f");
+		return -1;
+	}
 	// ploginfo("Mode   : %s", ConMode[_IMM(option)]);
 
 	//{TODO} implemente Console in UNISYM
@@ -140,6 +207,7 @@ int cotmain(int argc, char** argv) {
 #endif
 	switch (option) {
 	case option_t::SHELL: {
+		ploginfo("Library: %s", ulibver);
 		uni::TerminalBackend backend;
 		uni::TerminalDecoder decoder(&backend);
 		uni::TerminalLine line(&decoder, inbuf, sizeof(inbuf), hist_buf, sizeof(hist_buf) / sizeof(inbuf), complete_line);
@@ -159,16 +227,12 @@ int cotmain(int argc, char** argv) {
 		}
 	} break;
 	case option_t::FILE:
-		//{TODO}
-		//if (!(fp = fopen(point, "r")))
-		//{
-		//	printf("File %s is misty.", (char*)point);
-		//	goto endo;
-		//}
-		break;
-	case option_t::COMMAND:
-		//{CANCELLED}
-		break;
+		return run_script_file(target_arg, cbuff, ic_list);
+	case option_t::COMMAND: {
+		char cmd_buf[256] = {};
+		if (target_arg) StrCopyN(cmd_buf, target_arg, sizeof(cmd_buf) - 1);
+		return run_cot_line(cmd_buf, cbuff, ic_list);
+	}
 	default:
 		printlog(_LOG_ERROR, "Unknown Option: %d", option);//# inside error
 		break;

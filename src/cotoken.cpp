@@ -262,7 +262,7 @@ static void printtok(pureptr_t addr, stduint typ, bool readonly = false) {
 	{
 	case tok_number:
 		printf("%lf = ", double(*(uni::Coe*)addr));
-		printf("%s", (((uni::Coe*)addr)->ToString()).reference());
+		printf("%s", uni::String(*(uni::Coe*)addr).reference());
 		break;
 	default:
 		printf("%s", addr);
