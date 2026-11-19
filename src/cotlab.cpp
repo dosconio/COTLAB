@@ -151,7 +151,7 @@ int cotmain(int argc, char** argv) {
 
 	CotStrBuff cbuff;
 	{
-		cbuff.getEnv("ulibpath").FormatPath() += "Script/Cotoba/version";
+		cbuff.getEnv("ulibpath").FormatPath() += "cotoba/version";
 		HostFile verfile(cbuff.reference());
 		if (bool(verfile)) {
 			uver_str.Clear();

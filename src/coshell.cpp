@@ -413,6 +413,31 @@ int run_command(char* cmd) {
 			_exit(retcode);
 			return retcode;
 		}
+		// umask is a builtin because a separate command cannot change its parent shell's mask.
+		if (StrCompare("umask", stage_argv[0]) == 0) {
+			if (stages[0].infile || stages[0].outfile || stages[0].errfile) {
+				printf("Usage: umask [000..777]\n\r");
+				return 1;
+			}
+			if (stage_argc == 1) {
+				const mode_t mask = umask(0);
+				umask(mask);
+				printf("0%u%u%u\n\r", unsigned((mask >> 6) & 7), unsigned((mask >> 3) & 7), unsigned(mask & 7));
+				return 0;
+			}
+			mode_t mask = 0;
+			bool valid = stage_argc == 2 && stage_argv[1][0];
+			if (valid) for (const char* digit = stage_argv[1]; *digit; digit++) {
+				if (*digit < '0' || *digit > '7' || mask > (0777u - unsigned(*digit - '0')) / 8) { valid = false; break; }
+				mask = mask * 8 + (*digit - '0');
+			}
+			if (!valid) {
+				printf("Usage: umask [000..777]\n\r");
+				return 1;
+			}
+			umask(mask);
+			return 0;
+		}
 		if (StrCompare("cd", stage_argv[0]) == 0) {
 			const char* target_path = (stage_argc > 1) ? stage_argv[1] : "/";
 			if (chdir(target_path) < 0) {
@@ -491,7 +516,7 @@ int run_command(char* cmd) {
 
 			if (st.outfile) {
 				int flags = O_WRONLY | O_CREAT | (st.append_out ? O_APPEND : O_TRUNC);
-				int fd = open(st.outfile, flags);
+				int fd = open(st.outfile, flags, mode_t(0666));
 				if (fd < 0) {
 					write(2, "sh: failed to open output file\n\r", 32);
 					_exit(-1);
@@ -501,7 +526,7 @@ int run_command(char* cmd) {
 			}
 
 			if (st.errfile) {
-				int fd = open(st.errfile, O_WRONLY | O_CREAT | O_TRUNC);
+				int fd = open(st.errfile, O_WRONLY | O_CREAT | O_TRUNC, mode_t(0666));
 				if (fd < 0) {
 					write(2, "sh: failed to open error file\n\r", 31);
 					_exit(-1);
