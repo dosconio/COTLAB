@@ -15,6 +15,10 @@
 extern "C" char* getenv(const char* name);
 extern "C" int setenv(const char* name, const char* value, int overwrite);
 extern bool mode_shell;
+#ifdef _NOMMU
+extern int cot_nommu_spawn(const char* path, char** argv);
+extern int cot_nommu_wait(int* status);
+#endif
 
 #ifndef _WinNT
 
@@ -216,6 +220,11 @@ struct CommandStage {
 
 static constexpr unsigned MAX_PIPE_STAGES = 8;
 static CommandStage stages[MAX_PIPE_STAGES];
+#ifdef _NOMMU
+static char nommu_resolved_paths[MAX_PIPE_STAGES][256];
+static int nommu_pipefds[MAX_PIPE_STAGES - 1][2];
+static int nommu_pids[MAX_PIPE_STAGES];
+#endif
 
 static int builtin_cot_ls(unsigned argc, char** stage_argv) {
 	const char* path = (argc > 1) ? stage_argv[1] : ".";
@@ -455,6 +464,163 @@ int run_command(char* cmd) {
 		}
 	}
 
+	#ifdef _NOMMU
+	for (unsigned s = 0; s < stage_count; s++) {
+		CommandStage& st = stages[s];
+		if (StrCompare("cot+ls", st.argv[0]) == 0) {
+			const char* message = "sh: cot+ls cannot be used in a NoMMU pipeline or redirection\n\r";
+			write(2, message, StrLength(message));
+			setenv("?", "1", 1);
+			return -1;
+		}
+		if (!resolve_path(st.argv[0], nommu_resolved_paths[s], sizeof(nommu_resolved_paths[s]))) {
+			write(2, "sh: command not found\n\r", 23);
+			setenv("?", "127", 1);
+			return -1;
+		}
+	}
+
+	for (unsigned s = 0; s + 1 < MAX_PIPE_STAGES; s++) {
+		nommu_pipefds[s][0] = -1;
+		nommu_pipefds[s][1] = -1;
+	}
+	MemSet(nommu_pids, 0, sizeof(nommu_pids));
+
+	int saved_standard[3] = { -1, -1, -1 };
+	auto close_fd = [](int& fd) {
+		if (fd >= 0) {
+			close(fd);
+			fd = -1;
+		}
+	};
+	auto close_saved_standard = [&]() {
+		for (unsigned fd = 0; fd < 3; fd++) close_fd(saved_standard[fd]);
+	};
+	auto close_all_pipes = [&]() {
+		for (unsigned s = 0; s + 1 < MAX_PIPE_STAGES; s++) {
+			close_fd(nommu_pipefds[s][0]);
+			close_fd(nommu_pipefds[s][1]);
+		}
+	};
+	auto restore_standard = [&]() {
+		bool restored = true;
+		for (unsigned fd = 0; fd < 3; fd++) {
+			if (saved_standard[fd] < 0 || dup2(saved_standard[fd], fd) < 0) restored = false;
+		}
+		return restored;
+	};
+
+	for (unsigned fd = 0; fd < 3; fd++) {
+		saved_standard[fd] = dup(fd);
+		if (saved_standard[fd] < 0) {
+			close_saved_standard();
+			write(2, "sh: failed to preserve standard descriptors\n\r", 45);
+			setenv("?", "1", 1);
+			return -1;
+		}
+	}
+	for (unsigned s = 0; s + 1 < stage_count; s++) {
+		if (pipe(nommu_pipefds[s]) < 0) {
+			close_all_pipes();
+			close_saved_standard();
+			write(2, "sh: pipe creation failed\n\r", 26);
+			setenv("?", "1", 1);
+			return -1;
+		}
+	}
+
+	unsigned spawned_count = 0;
+	bool launch_failed = false;
+	for (unsigned s = 0; s < stage_count; s++) {
+		CommandStage& st = stages[s];
+		const char* stage_error = nullptr;
+
+		if (s > 0 && dup2(nommu_pipefds[s - 1][0], 0) < 0) {
+			stage_error = "sh: failed to redirect pipeline input\n\r";
+		}
+		if (!stage_error && s + 1 < stage_count && dup2(nommu_pipefds[s][1], 1) < 0) {
+			stage_error = "sh: failed to redirect pipeline output\n\r";
+		}
+
+		if (!stage_error && st.infile) {
+			int fd = open(st.infile, O_RDONLY);
+			if (fd < 0) {
+				stage_error = "sh: failed to open input file\n\r";
+			}
+			else {
+				if (dup2(fd, 0) < 0) stage_error = "sh: failed to redirect input file\n\r";
+				close(fd);
+			}
+		}
+		if (!stage_error && st.outfile) {
+			int flags = O_WRONLY | O_CREAT | (st.append_out ? O_APPEND : O_TRUNC);
+			int fd = open(st.outfile, flags, mode_t(0666));
+			if (fd < 0) {
+				stage_error = "sh: failed to open output file\n\r";
+			}
+			else {
+				if (dup2(fd, 1) < 0) stage_error = "sh: failed to redirect output file\n\r";
+				close(fd);
+			}
+		}
+		if (!stage_error && st.errfile) {
+			int fd = open(st.errfile, O_WRONLY | O_CREAT | O_TRUNC, mode_t(0666));
+			if (fd < 0) {
+				stage_error = "sh: failed to open error file\n\r";
+			}
+			else {
+				if (dup2(fd, 2) < 0) stage_error = "sh: failed to redirect error file\n\r";
+				close(fd);
+			}
+		}
+
+		int pid = stage_error ? -1 : cot_nommu_spawn(nommu_resolved_paths[s], st.argv);
+		const bool restored = restore_standard();
+		if (!restored && !stage_error) stage_error = "sh: failed to restore standard descriptors\n\r";
+		if (pid <= 0 && !stage_error) stage_error = "sh: process creation failed\n\r";
+
+		if (s > 0) close_fd(nommu_pipefds[s - 1][0]);
+		if (s + 1 < stage_count) close_fd(nommu_pipefds[s][1]);
+		if (pid > 0) nommu_pids[spawned_count++] = pid;
+		if (stage_error) {
+			write(2, stage_error, StrLength(stage_error));
+			launch_failed = true;
+			break;
+		}
+	}
+
+	close_all_pipes();
+	close_saved_standard();
+
+	int last_status = 0;
+	const int last_pid = spawned_count ? nommu_pids[spawned_count - 1] : -1;
+	unsigned remaining = spawned_count;
+	while (remaining) {
+		int status = 0;
+		const int child_pid = cot_nommu_wait(&status);
+		if (child_pid <= 0) {
+			write(2, "sh: wait failed\n\r", 17);
+			launch_failed = true;
+			break;
+		}
+		for (unsigned i = 0; i < spawned_count; i++) {
+			if (nommu_pids[i] != child_pid) continue;
+			nommu_pids[i] = 0;
+			remaining--;
+			if (child_pid == last_pid) last_status = status;
+			break;
+		}
+	}
+
+	if (launch_failed) last_status = 1;
+	char status_str[16];
+	outsfmtbuf(status_str, "%d", last_status);
+	setenv("?", status_str, 1);
+	if (stage_count == 1 && spawned_count == 1 && last_status) {
+		outsfmt("sh: process exited with code %d\n\r", last_status);
+	}
+	return launch_failed ? -1 : 0;
+	#else
 	// Execute 1..N pipeline stages uniformly
 	int prev_read_fd = -1;
 	pid_t pids[MAX_PIPE_STAGES] = {};
@@ -586,6 +752,7 @@ int run_command(char* cmd) {
 		setenv("?", status_str, 1);
 	}
 	return 0;
+	#endif
 }
 #else
 

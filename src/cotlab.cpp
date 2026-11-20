@@ -135,7 +135,9 @@ int branch_arith(CotStrBuff& cbuff, IdenChain(&ic_list)[3], uni::TerminalLine& l
 
 int cotmain(int argc, char** argv) {
 	using namespace uni;
+	#ifndef _NOMMU
 	signal(SIGINT, SIG_IGN);
+	#endif
 	// Standard I/O (0, 1, 2) is automatically bound to /dev/tty by the kernel
 	// write(2, "COTLAB Shell Started\n\r", 22);
 
